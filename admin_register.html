@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <!-- Meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <!-- Mobcxile Specific -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- PAGE TITLE HERE -->
+    <title>Pa-etos Hostel Accommodation </title>
+    <!-- Favicon icon -->
+    <link rel="shortcut icon" type="image/png" href="images/paetoa.png">
+    <link href="vendor/bootstrap-select/dist/css/bootstrap-select.min.css" rel="stylesheet">
+    <link class="main-css" href="css/style.css" rel="stylesheet">
+</head>
+
+<body>
+    <div id="preloader">
+        <div class="lds-ripple">
+            <div></div>
+            <div></div>
+        </div>
+    </div>
+
+    <div class="fix-wrapper">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-5 col-md-6">
+                    <div class="card mb-0 h-auto">
+                        <div class="card-body">
+                            <div class="text-center mb-3">
+                                <a href="admin_login.html"><img class="logo-auth" src="images/paetoa.png" alt=""></a>
+                            </div>
+                            <h4 class="text-center mb-4">Admin account</h4>
+                            <div id="messageBox" class="">
+                                <!-- Error or success messages will be displayed here -->
+                            </div>
+                            <form id="signupForm" action="php/admin_register.php" method="post" enctype="multipart/form-data">
+                                <div class="form-group mb-4">
+                                    <label class="form-label" for="username">Username</label>
+                                    <input type="text" class="form-control" placeholder="Enter Username" id="username" name="username" required>
+                                </div>
+                                <div class="form-group mb-4">
+                                    <label class="form-label" for="email">Email</label>
+                                    <input type="email" class="form-control" placeholder="hello@example.com" id="email" name="email" required>
+                                </div>
+                                <div class="mb-sm-4 mb-3 position-relative">
+                                    <label class="form-label" for="password">Password</label>
+                                    <input type="password" id="password" name="password" class="form-control" placeholder="Password" required>
+                                    <span class="show-pass eye">
+                                        <i class="fa fa-eye-slash"></i>
+                                        <i class="fa fa-eye"></i>
+                                    </span>
+                                </div>
+                                <div class="text-center">
+                                    <button type="submit" class="btn btn-primary btn-block">Sign up</button>
+                                </div>
+                            </form>
+                            <div class="new-account mt-3">
+                                <p>Already have an account? <a class="text-primary" href="admin_login.html">Sign in</a></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="footer">
+        <div class="copyright">
+            <p>Copyright © Designed &amp; Developed by <a href="#" target="_blank">ClintonCode</a> 2024</p>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="vendor/global/global.min.js"></script>
+    <script src="vendor/bootstrap-select/dist/js/bootstrap-select.min.js"></script>
+    <script src="js/dlabnav-init.js"></script>
+    <script src="js/custom.min.js"></script>
+    <script src="js/demo.js"></script>
+
+    <script>
+        // JavaScript to handle form submission and display messages
+        document.getElementById("signupForm").addEventListener("submit", function(event) {
+            event.preventDefault(); // Prevent default form submission
+            // Reset previous messages
+            document.getElementById("messageBox").innerHTML = "";
+            // Fetch form data
+            let formData = new FormData(this);
+            // Submit form data using fetch API
+            fetch('php/admin_register.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    // Display error message
+                    document.getElementById("messageBox").innerHTML = `<div class="alert alert-danger">${data.error}</div>`;
+                } else if (data.success) {
+                    // Display success message
+                    document.getElementById("messageBox").innerHTML = `<div class="alert alert-success">${data.success}</div>`;
+                    // Optionally redirect after success
+                    setTimeout(() => {
+                        window.location.href = "admin_login.html";
+                    }, 20); // Redirect after 2 seconds
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
+        });
+    </script>
+
+</body>
+
+</html>
