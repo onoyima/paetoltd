@@ -1,0 +1,4 @@
+portal/uploads/payments/*
+.gitignore_tmp
+cgi-bin
+CODEBASE_ANALYSIS.md
