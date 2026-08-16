@@ -20,6 +20,7 @@ $students_info = fetch_user_details();
 $activeSession = pt_active_session();
 $bookingsOpen = (bool)$activeSession;
 $sessionName = $activeSession ? $activeSession['name'] : '';
+$hostels = pt_all_hostels();
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -342,6 +343,15 @@ $sessionName = $activeSession ? $activeSession['name'] : '';
 											<label class="form-label">Matriculation Number</label>
 											<input type="text" class="form-control"
 												value="<?php echo htmlspecialchars($students_info['regNo'] ?? ''); ?>" readonly>
+										</div>
+										<div class="col-sm-6 m-b30">
+											<label class="form-label">Select Hostel <span class="text-danger">*</span></label>
+											<select class="form-control default-select" name="hostel_id" required>
+												<option value="" selected disabled>Select hostel</option>
+												<?php foreach ($hostels as $h): ?>
+													<option value="<?php echo (int)$h['id']; ?>"><?php echo htmlspecialchars($h['name']); ?></option>
+												<?php endforeach; ?>
+											</select>
 										</div>
 										<div class="col-sm-6 m-b30">
 											<input type="hidden" class="form-control" name="id"

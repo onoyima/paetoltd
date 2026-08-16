@@ -61,7 +61,7 @@ $pageHeader = 'List Student';
 <script>
 	function esc(s) {
 		return String(s ?? '').replace(/[&<>"']/g, function (c) {
-			return { '&': '&', '<': '<', '>': '>', '"': '"', "'": ''' }[c];
+			return { '&': '&', '<': '<', '>': '>', '"': '"', "'": '\'' }[c];
 		});
 	}
 

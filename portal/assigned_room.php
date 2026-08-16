@@ -140,26 +140,29 @@ $pageHeader = 'Assign Room';
 
 						<!-- Search & filter toolbar -->
 						<div class="row mt-3 g-2">
-							<div class="col-md-2 col-sm-6">
+							<div class="col-md-3 col-sm-6">
 								<input type="text" class="form-control form-control-sm" id="searchName" placeholder="Name">
 							</div>
-							<div class="col-md-2 col-sm-6">
+							<div class="col-md-3 col-sm-6">
 								<input type="text" class="form-control form-control-sm" id="searchMatric" placeholder="Matric No">
 							</div>
-							<div class="col-md-2 col-sm-6">
+							<div class="col-md-3 col-sm-6">
 								<input type="text" class="form-control form-control-sm" id="searchDepartment" placeholder="Department">
 							</div>
-							<div class="col-md-2 col-sm-6">
+							<div class="col-md-3 col-sm-6">
 								<input type="text" class="form-control form-control-sm" id="searchLevel" placeholder="Level">
 							</div>
-							<div class="col-md-2 col-sm-6">
+							<div class="col-md-3 col-sm-6">
 								<input type="text" class="form-control form-control-sm" id="searchStudentNumber" placeholder="Student Number">
 							</div>
-							<div class="col-md-2 col-sm-6">
+							<div class="col-md-3 col-sm-6">
 								<input type="text" class="form-control form-control-sm" id="searchRoomBunk" placeholder="Room Bunk">
 							</div>
-							<div class="col-md-2 col-sm-6">
-								<button type="button" class="btn btn-sm btn-primary" id="clearFilters">Clear Filters</button>
+							<div class="col-md-3 col-sm-6">
+								<input type="text" class="form-control form-control-sm" id="searchBedSpace" placeholder="Bed Space">
+							</div>
+							<div class="col-md-3 col-sm-6">
+								<button type="button" class="btn btn-sm btn-primary w-100" id="clearFilters">Clear Filters</button>
 							</div>
 						</div>
 
@@ -183,6 +186,7 @@ $pageHeader = 'Assign Room';
 										<th>Level</th>
 										<th>Student Number</th>
 										<th>Room Bunk</th>
+										<th>Bed Space</th>
 										<th>Hostel</th>
 										<th>Action</th>
 									</tr>
@@ -267,6 +271,7 @@ $pageHeader = 'Assign Room';
 			<div class="modal-body">
 				<form id="updateStudentForm">
 					<input type="hidden" id="studentId" name="id">
+					<input type="hidden" id="studentHostelId" name="hostel_id">
 					<div class="form-group">
 						<label for="studentName">Student Name</label>
 						<input type="text" class="form-control" id="studentName" name="student_name" required>
@@ -293,8 +298,13 @@ $pageHeader = 'Assign Room';
 					</div>
 					<div class="form-group">
 						<label for="roomBunk">Room Bunk</label>
-						<input type="text" class="form-control" id="roomBunk" name="room_bunk" readonly>
-						<small class="form-text text-muted">Room Bunk cannot be changed.</small>
+						<input type="text" class="form-control" id="roomBunk" name="room_bunk" required>
+						<small class="form-text text-muted">Room Bunk is the unique room identifier. Editing it also updates the student's reservation.</small>
+					</div>
+					<div class="form-group">
+						<label for="bedSpace">Bed Space</label>
+						<input type="text" class="form-control" id="bedSpace" name="bed_space" placeholder="e.g. Bunk 2 Up">
+						<small class="form-text text-muted">Leave blank to auto-derive from Room Bunk (e.g. ROOM 323-2U → Bunk 2 Up).</small>
 					</div>
 				</form>
 			</div>
@@ -420,6 +430,7 @@ $pageHeader = 'Assign Room';
 			.column(5).search($('#searchLevel').val(), false, false)
 			.column(6).search($('#searchStudentNumber').val(), false, false)
 			.column(7).search($('#searchRoomBunk').val(), false, false)
+			.column(8).search($('#searchBedSpace').val(), false, false)
 			.draw();
 	}
 
@@ -438,17 +449,20 @@ $pageHeader = 'Assign Room';
 					<td>${esc(user.level)}</td>
 					<td>${esc(user.student_number)}</td>
 					<td>${esc(user.room_bunk)}</td>
+					<td>${esc(user.bed_space)}</td>
 					<td>${esc(user.hostel_name || getHostelName(user.hostel_id))}</td>
 					<td class="text-center text-nowrap">
 						<button class="btn btn-primary btn-sm px-2 me-1 assign-update-btn" title="Update"
 							data-sn="${esc(user.sn)}"
+							data-hostel-id="${esc(user.hostel_id)}"
 							data-student-name="${esc(user.student_name)}"
 							data-matric-no="${esc(user.matric_no)}"
 							data-department="${esc(user.department)}"
 							data-parent-number="${esc(user.parent_number)}"
 							data-level="${esc(user.level)}"
 							data-student-number="${esc(user.student_number)}"
-							data-room-bunk="${esc(user.room_bunk)}"><i class="fas fa-pencil-alt"></i></button>
+							data-room-bunk="${esc(user.room_bunk)}"
+							data-bed-space="${esc(user.bed_space)}"><i class="fas fa-pencil-alt"></i></button>
 						<button class="btn btn-danger btn-sm px-2 assign-revoke-btn" title="Revoke" data-sn="${esc(user.sn)}" data-name="${esc(user.student_name)}"><i class="fas fa-trash-alt"></i></button>
 					</td>
 				</tr>
@@ -522,7 +536,8 @@ $pageHeader = 'Assign Room';
 			dept: String($('#searchDepartment').val() || '').toLowerCase(),
 			level: String($('#searchLevel').val() || '').toLowerCase(),
 			snum: String($('#searchStudentNumber').val() || '').toLowerCase(),
-			room: String($('#searchRoomBunk').val() || '').toLowerCase()
+			room: String($('#searchRoomBunk').val() || '').toLowerCase(),
+			bed: String($('#searchBedSpace').val() || '').toLowerCase()
 		};
 		return ptUsers.filter(function (u) {
 			return (!f.name || String(u.student_name || '').toLowerCase().includes(f.name))
@@ -530,15 +545,16 @@ $pageHeader = 'Assign Room';
 				&& (!f.dept || String(u.department || '').toLowerCase().includes(f.dept))
 				&& (!f.level || String(u.level || '').toLowerCase().includes(f.level))
 				&& (!f.snum || String(u.student_number || '').toLowerCase().includes(f.snum))
-				&& (!f.room || String(u.room_bunk || '').toLowerCase().includes(f.room));
+				&& (!f.room || String(u.room_bunk || '').toLowerCase().includes(f.room))
+				&& (!f.bed || String(u.bed_space || '').toLowerCase().includes(f.bed));
 		});
 	}
 
 	function buildCsv(rows) {
-		var headers = ['Serial Number', 'Student Name', 'Matric No', 'Department', 'Parent Number', 'Level', 'Student Number', 'Room Bunk', 'Hostel'];
+		var headers = ['Serial Number', 'Student Name', 'Matric No', 'Department', 'Parent Number', 'Level', 'Student Number', 'Room Bunk', 'Bed Space', 'Hostel'];
 		var lines = [headers.map(function (h) { return '"' + h + '"'; }).join(',')];
 		rows.forEach(function (u, i) {
-			var vals = [i + 1, u.student_name, u.matric_no, u.department, u.parent_number, u.level, u.student_number, u.room_bunk, (u.hostel_name || getHostelName(u.hostel_id))];
+			var vals = [i + 1, u.student_name, u.matric_no, u.department, u.parent_number, u.level, u.student_number, u.room_bunk, u.bed_space, (u.hostel_name || getHostelName(u.hostel_id))];
 			lines.push(vals.map(function (v) {
 				var s = String(v == null ? '' : v);
 				return (s.includes(',') || s.includes('"') || s.includes('\n')) ? '"' + s.replace(/"/g, '""') + '"' : s;
@@ -595,6 +611,7 @@ $pageHeader = 'Assign Room';
 	function openUpdateModal() {
 		var btn = $(this);
 		$('#studentId').val(btn.data('sn'));
+		$('#studentHostelId').val(btn.data('hostel-id') || '');
 		$('#studentName').val(btn.data('student-name'));
 		$('#matricNo').val(btn.data('matric-no'));
 		$('#department').val(btn.data('department'));
@@ -602,6 +619,7 @@ $pageHeader = 'Assign Room';
 		$('#level').val(btn.data('level'));
 		$('#studentNumber').val(btn.data('student-number'));
 		$('#roomBunk').val(btn.data('room-bunk'));
+		$('#bedSpace').val(btn.data('bed-space'));
 		bootstrap.Modal.getOrCreateInstance(document.getElementById('updateStudentModal')).show();
 	}
 
@@ -687,14 +705,14 @@ $pageHeader = 'Assign Room';
 	function printTable() {
 		var rows = getFilteredUsers();
 		var rowsHtml = rows.map(function (u, i) {
-			return '<tr><td>' + (i + 1) + '</td><td>' + esc(u.student_name) + '</td><td>' + esc(u.matric_no) + '</td><td>' + esc(u.department) + '</td><td>' + esc(u.parent_number) + '</td><td>' + esc(u.level) + '</td><td>' + esc(u.student_number) + '</td><td>' + esc(u.room_bunk) + '</td><td>' + esc(u.hostel_name || getHostelName(u.hostel_id)) + '</td></tr>';
+			return '<tr><td>' + (i + 1) + '</td><td>' + esc(u.student_name) + '</td><td>' + esc(u.matric_no) + '</td><td>' + esc(u.department) + '</td><td>' + esc(u.parent_number) + '</td><td>' + esc(u.level) + '</td><td>' + esc(u.student_number) + '</td><td>' + esc(u.room_bunk) + '</td><td>' + esc(u.bed_space) + '</td><td>' + esc(u.hostel_name || getHostelName(u.hostel_id)) + '</td></tr>';
 		}).join('');
 		var w = window.open('', '', 'height=600,width=800');
 		w.document.write('<html><head><title>Assigned Rooms</title>');
 		w.document.write('<style>body{font-family:Arial,sans-serif;} table{width:100%;border-collapse:collapse;} th,td{border:1px solid #ccc;padding:6px;font-size:12px;} th{background:#f0f0f0;}</style>');
 		w.document.write('</head><body>');
 		w.document.write('<h3>Assigned Rooms</h3>');
-		w.document.write('<table><thead><tr><th>S/N</th><th>Student Name</th><th>Matric No</th><th>Department</th><th>Parent Number</th><th>Level</th><th>Student Number</th><th>Room Bunk</th><th>Hostel</th></tr></thead><tbody>' + rowsHtml + '</tbody></table>');
+		w.document.write('<table><thead><tr><th>S/N</th><th>Student Name</th><th>Matric No</th><th>Department</th><th>Parent Number</th><th>Level</th><th>Student Number</th><th>Room Bunk</th><th>Bed Space</th><th>Hostel</th></tr></thead><tbody>' + rowsHtml + '</tbody></table>');
 		w.document.close();
 		w.print();
 	}
@@ -737,14 +755,19 @@ $pageHeader = 'Assign Room';
 		$('#printTable').on('click', printTable);
 		$('#downloadCSVTemplate').on('click', downloadCSVTemplate);
 		$('#clearFilters').on('click', function () {
-			$('#searchName, #searchMatric, #searchDepartment, #searchLevel, #searchStudentNumber, #searchRoomBunk').val('');
+			$('#searchName, #searchMatric, #searchDepartment, #searchLevel, #searchStudentNumber, #searchRoomBunk, #searchBedSpace').val('');
 			if (ptRoomTable) {
 				ptRoomTable.search('').columns().search('').draw();
 			}
 		});
 
 		// Column search filters
-		$('#searchName, #searchMatric, #searchDepartment, #searchLevel, #searchStudentNumber, #searchRoomBunk').on('keyup change', applyColumnFilters);
+		$('#searchName, #searchMatric, #searchDepartment, #searchLevel, #searchStudentNumber, #searchRoomBunk, #searchBedSpace').on('keyup change', applyColumnFilters);
+
+		// Auto-derive the bed space when the room bunk changes
+		$('#roomBunk').on('change', function () {
+			$('#bedSpace').val('');
+		});
 
 		// Confirm modal delete button
 		$('#ptConfirmDeleteBtn').on('click', function () {

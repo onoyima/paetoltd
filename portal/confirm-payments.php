@@ -5,6 +5,12 @@ require_once __DIR__ . '/php/rbac.php';
 pt_require_page('confirm_payment');
 
 include 'php/fetch_admin_info.php';
+require_once __DIR__ . '/php/academic_helper.php';
+
+$sessions = pt_all_sessions();
+$hostels = pt_all_hostels();
+$selSession = isset($_GET['session_id']) ? (int)$_GET['session_id'] : 0;
+$selHostel = isset($_GET['hostel_id']) ? (int)$_GET['hostel_id'] : 0;
 
 $pageTitle = 'Confirm Payments';
 $pageHeader = 'Dashboard';
@@ -21,6 +27,35 @@ $pageHeader = 'Dashboard';
 	<div class="container-fluid">
 		<div class="d-flex align-items-center mb-4 flex-wrap">
 			<h3 class="me-auto">Payment Lists</h3>
+		</div>
+		<div class="row mb-3 g-3">
+			<div class="col-sm-5 col-xl-3">
+				<label class="form-label">Academic Session</label>
+				<select id="filterSession" class="default-select form-control">
+					<option value="0">All Sessions</option>
+					<?php foreach ($sessions as $s): ?>
+						<option value="<?php echo (int)$s['id']; ?>" <?php echo $selSession === (int)$s['id'] ? 'selected' : ''; ?>>
+							<?php echo htmlspecialchars($s['name']); ?><?php echo $s['is_active'] ? ' (Active)' : ''; ?>
+						</option>
+					<?php endforeach; ?>
+				</select>
+			</div>
+			<div class="col-sm-5 col-xl-3">
+				<label class="form-label">Hostel</label>
+				<select id="filterHostel" class="default-select form-control">
+					<option value="0">All Hostels</option>
+					<?php foreach ($hostels as $h): ?>
+						<option value="<?php echo (int)$h['id']; ?>" <?php echo $selHostel === (int)$h['id'] ? 'selected' : ''; ?>>
+							<?php echo htmlspecialchars($h['name']); ?>
+						</option>
+					<?php endforeach; ?>
+				</select>
+			</div>
+			<?php if ($selSession || $selHostel): ?>
+				<div class="col-sm-2 col-xl-3 d-flex align-items-end">
+					<a href="confirm-payments.php" class="btn btn-secondary light btn-sm">Clear Filters</a>
+				</div>
+			<?php endif; ?>
 		</div>
 		<div class="row">
 			<div class="col-xl-12">
@@ -40,6 +75,8 @@ $pageHeader = 'Dashboard';
 									<th>Phone Number</th>
 									<th>Payers Name</th>
 									<th>Bank Name</th>
+									<th>Session</th>
+									<th>Hostel</th>
 									<th>Assign</th>
 									<th>Actions</th>
 								</tr>
@@ -55,6 +92,8 @@ $pageHeader = 'Dashboard';
 										<td><?= htmlspecialchars($row["contactNo"]) ?></td>
 										<td><?= htmlspecialchars($row["payers_name"]) ?></td>
 										<td><?= htmlspecialchars($row["bankName"]) ?></td>
+										<td><?= htmlspecialchars($row["session_name"] ?? '—') ?></td>
+										<td><?= htmlspecialchars($row["hostel_name"] ?? '—') ?></td>
 										<td>
 											<button class="btn btn-success view-payment"
 												data-userid="<?= $row['id'] ?>">Assign</button>
@@ -97,11 +136,22 @@ $pageHeader = 'Dashboard';
 <script>
 	function esc(s) {
 		return String(s ?? '').replace(/[&<>"']/g, function (c) {
-			return { '&': '&', '<': '<', '>': '>', '"': '"', "'": ''' }[c];
+			return { '&': '&', '<': '<', '>': '>', '"': '"', "'": '\'' }[c];
 		});
 	}
 
 	// Use event delegation so this works both on initial load and after PTNav AJAX swaps
+	$(document).on('change', '#filterSession, #filterHostel', function () {
+		var sessionId = $('#filterSession').val();
+		var hostelId = $('#filterHostel').val();
+		var params = [];
+		if (sessionId && sessionId !== '0') { params.push('session_id=' + encodeURIComponent(sessionId)); }
+		if (hostelId && hostelId !== '0') { params.push('hostel_id=' + encodeURIComponent(hostelId)); }
+		var qs = params.length ? '?' + params.join('&') : '';
+		var url = 'confirm-payments.php' + qs;
+		if (window.PTNav && PTNav.navigate) { PTNav.navigate(url); } else { window.location.href = url; }
+	});
+
 	$(document).on('click', '.view-payment', function () {
 			const userId = this.getAttribute('data-userid');
 			const viewModalEl = document.getElementById('viewModal');

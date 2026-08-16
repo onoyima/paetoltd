@@ -45,7 +45,8 @@ try {
                 ar.`parent_number`,
                 ar.`level`,
                 ar.`student_number`,
-                ar.`room_bunk` 
+                ar.`room_bunk`,
+                ar.`bed_space` 
             FROM `assign_room` ar
             LEFT JOIN `hostel` h ON h.id = ar.hostel_id
             WHERE ar.`session_id` = ?";
@@ -79,7 +80,8 @@ try {
             'parent_number' => $row['parent_number'],
             'level' => $row['level'],
             'student_number' => $row['student_number'],
-            'room_bunk' => $row['room_bunk']
+            'room_bunk' => $row['room_bunk'],
+            'bed_space' => $row['bed_space']
         ];
     }
     $stmt->close();

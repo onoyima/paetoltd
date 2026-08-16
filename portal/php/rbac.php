@@ -42,6 +42,12 @@ if (!function_exists('pt_can')) {
     }
 }
 
+if (!function_exists('pt_is_superadmin')) {
+    function pt_is_superadmin() {
+        return pt_is_admin() && $_SESSION['role'] === 'superadmin';
+    }
+}
+
 if (!function_exists('pt_role_label')) {
     function pt_role_label($role) {
         $labels = array(

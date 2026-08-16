@@ -10,6 +10,21 @@ $hostels = pt_all_hostels();
 $activeSession = pt_active_session();
 $sessionId = pt_active_session_id();
 
+// All categories (server-side preload for the Add Room dropdown, so it works
+// immediately on page load without an extra async fetch).
+$allCategories = array();
+if (isset($conn)) {
+    $catRes = $conn->query("SELECT c.id, c.hostel_id, h.name AS hostel_name, c.room_type, c.rate
+                            FROM room_category c
+                            LEFT JOIN hostel h ON h.id = c.hostel_id
+                            ORDER BY c.hostel_id ASC, c.id ASC");
+    if ($catRes) {
+        while ($catRow = $catRes->fetch_assoc()) {
+            $allCategories[] = $catRow;
+        }
+    }
+}
+
 $hostelColors = array(
     1 => '#F93A0B',
     2 => '#3a86ff',
@@ -297,7 +312,7 @@ $pageHeader = 'Manage Hostel';
 						<h4 class="card-title"><i class="fas fa-door-open me-2 text-primary"></i>View Rooms</h4>
 					</div>
 					<div class="card-body">
-						<div class="table-responsive">
+						<div class="table-responsive pt-table-wrap">
 							<table class="table display mb-4 dataTablesCard job-table card-table" id="roomTable">
 								<thead>
 									<tr>
@@ -323,7 +338,7 @@ $pageHeader = 'Manage Hostel';
 						<h4 class="card-title"><i class="fas fa-tags me-2 text-primary"></i>Room Categories</h4>
 					</div>
 					<div class="card-body">
-						<div class="table-responsive">
+						<div class="table-responsive pt-table-wrap">
 							<table class="table display mb-4 dataTablesCard job-table card-table" id="roomDetailsTable">
 								<thead>
 									<tr>
@@ -384,6 +399,7 @@ $pageHeader = 'Manage Hostel';
 <script>
 	var currentHostelId = 0;
 	var ptConfirmAction = null;
+	var ptRoomCategories = <?php echo json_encode($allCategories); ?>;
 
 	function esc(s) {
 		return String(s ?? '').replace(/[&<>"']/g, function (c) {
@@ -405,21 +421,19 @@ $pageHeader = 'Manage Hostel';
 		$('.pt-col-hostel').toggle(currentHostelId === 0);
 	}
 
-	function populateRoomTypeDropdown(hostelId) {
-		var hostel = hostelId || $('#addRoomHostel').val() || 0;
+	function populateRoomTypeDropdown() {
+		var hostel = parseInt($('#addRoomHostel').val() || 0, 10) || 0;
 		var select = $('#roomType');
 		select.empty();
 		select.append('<option selected value="0">Choose...</option>');
-		if (!hostel || hostel === '0') { return; }
-		$.getJSON('php/room_category.php?hostel_id=' + hostel)
-			.done(function (data) {
-				data.forEach(function (category) {
-					select.append($('<option></option>').val(category.id).text(category.room_type));
-				});
-			})
-			.fail(function () {
-				if (window.PT) { PT.error('Could not load room categories.'); }
-			});
+		(ptRoomCategories || []).forEach(function (category) {
+			if (hostel > 0 && parseInt(category.hostel_id, 10) !== hostel) return;
+			var label = category.room_type + (hostel === 0 ? ' (' + (category.hostel_name || 'Hostel ' + category.hostel_id) + ')' : '');
+			select.append($('<option></option>').val(category.id).text(label));
+		});
+		if (jQuery.fn.selectpicker) {
+			select.selectpicker('refresh');
+		}
 	}
 
 	function displayRooms(categories, rooms) {
@@ -549,19 +563,37 @@ $pageHeader = 'Manage Hostel';
 
 	function loadAllData() {
 		toggleHostelColumn();
+
+		var roomWrap = $('#roomTable').closest('.pt-table-wrap')[0];
+		var catWrap = $('#roomDetailsTable').closest('.pt-table-wrap')[0];
+
+		// Drop any live DataTables first so the skeleton rows render cleanly
+		destroyTables();
+		if (window.PT) {
+			PT.tableLoading(roomWrap, true);
+			PT.tableLoading(catWrap, true);
+		}
+
 		$.when(
 			$.getJSON(getHostelUrl('php/room_category.php')),
 			$.getJSON(getHostelUrl('php/room.php'))
 		).done(function (categoriesResponse, roomsResponse) {
 			var categories = categoriesResponse[0];
 			var rooms = roomsResponse[0];
-			destroyTables();
+			if (window.PT) {
+				PT.tableLoading(roomWrap, false);
+				PT.tableLoading(catWrap, false);
+			}
 			displayRooms(categories, rooms);
 			displayCategories(categories);
-			populateRoomTypeDropdown(currentHostelId || 0);
+			populateRoomTypeDropdown();
 			initDataTables();
 		}).fail(function () {
-			if (window.PT) { PT.error('Could not load hostel data.'); }
+			if (window.PT) {
+				PT.tableLoading(roomWrap, false);
+				PT.tableLoading(catWrap, false);
+				PT.error('Could not load hostel data.');
+			}
 		});
 	}
 
@@ -572,13 +604,17 @@ $pageHeader = 'Manage Hostel';
 			if (currentHostelId > 0) {
 				$('#addRoomHostel').val(String(currentHostelId));
 				$('#addCategoryHostel').val(String(currentHostelId));
+				if (jQuery.fn.selectpicker) {
+					$('#addRoomHostel, #addCategoryHostel').selectpicker('refresh');
+				}
 			}
+			populateRoomTypeDropdown();
 			loadAllData();
 		});
 
 		// Room type dropdown follows the selected hostel in the Add Room form
 		$('#addRoomHostel').on('change', function () {
-			populateRoomTypeDropdown($(this).val());
+			populateRoomTypeDropdown();
 		});
 
 		$('#addRoomForm').on('submit', submitAddRoom);
@@ -805,10 +841,13 @@ $pageHeader = 'Manage Hostel';
 			success: function (response) {
 				if (response.status === 'success') {
 					if (window.PT) { PT.success(response.message || 'Room added successfully!'); }
-					$('#addRoomForm')[0].reset();
-					$('#addRoomHostel').val(String(hostelId));
-					populateRoomTypeDropdown(hostelId);
-					loadAllData();
+				$('#addRoomForm')[0].reset();
+				$('#addRoomHostel').val(String(hostelId));
+				if (jQuery.fn.selectpicker) {
+					$('#addRoomHostel').selectpicker('refresh');
+				}
+				populateRoomTypeDropdown();
+				loadAllData();
 				} else {
 					if (window.PT) { PT.error(response.message || 'Failed to add room'); }
 				}
@@ -854,6 +893,9 @@ $pageHeader = 'Manage Hostel';
 					if (window.PT) { PT.success(response.message || 'Room category added successfully!'); }
 					$('#addCategoryForm')[0].reset();
 					$('#addCategoryHostel').val(String(hostelId));
+					if (jQuery.fn.selectpicker) {
+						$('#addCategoryHostel').selectpicker('refresh');
+					}
 					loadAllData();
 				} else {
 					if (window.PT) { PT.error(response.message || 'Failed to add room category'); }

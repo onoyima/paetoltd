@@ -33,9 +33,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $userId = (int)$_SESSION['user_id'];
     $bankName = isset($_POST['bankName']) ? trim($_POST['bankName']) : '';
     $payersName = isset($_POST['payers_name']) ? trim($_POST['payers_name']) : '';
+    $hostelId = isset($_POST['hostel_id']) ? (int)$_POST['hostel_id'] : 0;
 
     if ($bankName === '' || $payersName === '') {
         $response['error'] = "Bank name and payer name are required";
+    } elseif ($hostelId <= 0 || !in_array($hostelId, array_map('intval', array_column(pt_all_hostels(), 'id')), true)) {
+        $response['error'] = "Please select a valid hostel";
     } else {
         // Check if user has already submitted payment info for this session
         $stmt_check = $conn->prepare("SELECT userId FROM payments WHERE userId = ? AND session_id = ?");
@@ -69,8 +72,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $fileData = file_get_contents($fileTmpPath);
 
                         // Prepare SQL query
-                        $stmt_insert = $conn->prepare("INSERT INTO payments (userId, session_id, paymentInfo, bankName, payers_name, status, uploadDate) VALUES (?, ?, ?, ?, ?, 'Pending', NOW())");
-                        $stmt_insert->bind_param("iisss", $userId, $sessionId, $fileData, $bankName, $payersName);
+                        $stmt_insert = $conn->prepare("INSERT INTO payments (userId, session_id, hostel_id, paymentInfo, bankName, payers_name, status, uploadDate) VALUES (?, ?, ?, ?, ?, ?, 'Pending', NOW())");
+                        $stmt_insert->bind_param("iiisss", $userId, $sessionId, $hostelId, $fileData, $bankName, $payersName);
 
                         // Execute the query
                         if ($stmt_insert->execute()) {

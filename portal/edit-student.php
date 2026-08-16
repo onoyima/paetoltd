@@ -80,7 +80,7 @@ $pageHeader = 'Dashboard';
 	// Function to display users in the table
 	function esc(s) {
 		return String(s ?? '').replace(/[&<>"']/g, function (c) {
-			return { '&': '&', '<': '<', '>': '>', '"': '"', "'": ''' }[c];
+			return { '&': '&', '<': '<', '>': '>', '"': '"', "'": '\'' }[c];
 		});
 	}
 

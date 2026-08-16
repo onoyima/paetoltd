@@ -51,28 +51,30 @@ $pageHeader = 'Manage Session';
 			</div>
 		<?php endif; ?>
 
-		<div class="row">
-			<div class="col-12">
-				<div class="card">
-					<div class="card-header">
-						<h4 class="card-title">Create New Session</h4>
-					</div>
-					<div class="card-body">
-						<form id="pt-session-create" class="row g-3">
-							<div class="col-sm-6">
-								<label class="form-label">Session Name <span
-										class="text-danger">*</span></label>
-								<input type="text" class="form-control" name="name" placeholder="e.g. 2026/2027"
-									required>
-							</div>
-							<div class="col-sm-6 d-flex align-items-end">
-								<button type="submit" class="btn btn-primary btn-sm">Create Session</button>
-							</div>
-						</form>
+		<?php if (pt_is_superadmin()): ?>
+			<div class="row">
+				<div class="col-12">
+					<div class="card">
+						<div class="card-header">
+							<h4 class="card-title">Create New Session</h4>
+						</div>
+						<div class="card-body">
+							<form id="pt-session-create" class="row g-3">
+								<div class="col-sm-6">
+									<label class="form-label">Session Name <span
+											class="text-danger">*</span></label>
+									<input type="text" class="form-control" name="name" placeholder="e.g. 2026/2027"
+										required>
+								</div>
+								<div class="col-sm-6 d-flex align-items-end">
+									<button type="submit" class="btn btn-primary btn-sm">Create Session</button>
+								</div>
+							</form>
+						</div>
 					</div>
 				</div>
 			</div>
-		</div>
+		<?php endif; ?>
 
 		<div class="row">
 			<div class="col-12">
@@ -108,10 +110,16 @@ $pageHeader = 'Manage Session';
 											<td><?php echo htmlspecialchars($s['activated_at'] ?? '—'); ?></td>
 											<td><?php echo htmlspecialchars($s['created_at'] ?? '—'); ?></td>
 											<td>
-												<?php if (!$s['is_active']): ?>
+												<?php if ($s['is_active']): ?>
+													<span class="text-muted">—</span>
+												<?php elseif (pt_is_superadmin()): ?>
 													<button type="button"
 														class="btn btn-success btn-sm pt-session-activate"
 														data-id="<?php echo (int) $s['id']; ?>">Activate</button>
+													<button type="button"
+														class="btn btn-danger btn-sm pt-session-delete"
+														data-id="<?php echo (int) $s['id']; ?>"
+														data-name="<?php echo htmlspecialchars($s['name']); ?>">Delete</button>
 												<?php else: ?>
 													<span class="text-muted">—</span>
 												<?php endif; ?>
@@ -127,10 +135,47 @@ $pageHeader = 'Manage Session';
 		</div>
 </div>
 
+<!-- Confirm Action Modal -->
+<div class="modal fade" id="ptConfirmModal" tabindex="-1" role="dialog" aria-labelledby="ptConfirmModalLabel" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered" role="document">
+		<div class="modal-content">
+			<div class="modal-header border-0 pb-0">
+				<h5 class="modal-title" id="ptConfirmModalLabel">Confirm Action</h5>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+			</div>
+			<div class="modal-body text-center pt-2">
+				<div class="pt-confirm-icon">
+					<i class="fas fa-exclamation-triangle"></i>
+				</div>
+				<h4 class="mt-3 mb-1" id="ptConfirmTitle">Are you sure?</h4>
+				<p class="text-muted mb-0" id="ptConfirmMessage"></p>
+			</div>
+			<div class="modal-footer border-0 justify-content-center pb-4">
+				<button type="button" class="btn btn-secondary light" data-bs-dismiss="modal">Cancel</button>
+				<button type="button" class="btn btn-danger" id="ptConfirmDeleteBtn">Delete</button>
+			</div>
+		</div>
+	</div>
+</div>
+
+<style>
+	.pt-confirm-icon {
+		width: 76px;
+		height: 76px;
+		line-height: 76px;
+		border-radius: 50%;
+		background: rgba(220, 53, 69, 0.12);
+		color: #dc3545;
+		font-size: 32px;
+		margin: 0 auto;
+	}
+</style>
+
 <script>
+	var ptConfirmAction = null;
 	function esc(s) {
 		return String(s ?? '').replace(/[&<>"']/g, function (c) {
-			return { '&': '&', '<': '<', '>': '>', '"': '"', "'": ''' }[c];
+			return { '&': '&', '<': '<', '>': '>', '"': '"', "'": '\'' }[c];
 		});
 	}
 
@@ -157,13 +202,39 @@ $pageHeader = 'Manage Session';
 		});
 	});
 
+	function openSessionConfirm(title, message, onConfirm, btnLabel) {
+		$('#ptConfirmTitle').text(title);
+		$('#ptConfirmMessage').text(message);
+		$('#ptConfirmDeleteBtn').text(btnLabel || 'Confirm');
+		ptConfirmAction = onConfirm;
+		bootstrap.Modal.getOrCreateInstance(document.getElementById('ptConfirmModal')).show();
+	}
+
+	$('#ptConfirmDeleteBtn').on('click', function () {
+		var action = ptConfirmAction;
+		ptConfirmAction = null;
+		bootstrap.Modal.getOrCreateInstance(document.getElementById('ptConfirmModal')).hide();
+		if (action) { action(); }
+	});
+
 	$(document).on('click', '.pt-session-activate', function () {
 		var id = $(this).data('id');
 		var name = $(this).closest('tr').find('td').eq(1).text().trim();
-		if (!window.confirm('Activate session "' + name + '"? All other sessions will be closed.')) { return; }
-		ptSessionCall('php/session_api.php', { action: 'activate', id: id }, function () {
-			if (window.PTNav) { PTNav.refresh(); } else { location.reload(); }
-		});
+		openSessionConfirm('Activate session', 'Activate "' + name + '"? All other sessions will be closed.', function () {
+			ptSessionCall('php/session_api.php', { action: 'activate', id: id }, function () {
+				if (window.PTNav) { PTNav.refresh(); } else { location.reload(); }
+			});
+		}, 'Activate');
+	});
+
+	$(document).on('click', '.pt-session-delete', function () {
+		var id = $(this).data('id');
+		var name = $(this).closest('tr').find('td').eq(1).text().trim();
+		openSessionConfirm('Delete session', 'Delete "' + name + '"? This cannot be undone.', function () {
+			ptSessionCall('php/session_api.php', { action: 'delete', id: id }, function () {
+				if (window.PTNav) { PTNav.refresh(); } else { location.reload(); }
+			});
+		}, 'Delete');
 	});
 </script>
 
