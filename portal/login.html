@@ -154,19 +154,30 @@
     <div class="modal fade" id="feeNoticeModal" tabindex="-1" role="dialog" aria-labelledby="feeNoticeModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title text-white" id="feeNoticeModalLabel">NOTICE ON ACCOMMODATION FEE</h5>
-                    <button type="button" class="btn-close text-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                <button type="button" class="auth-notice-close" data-bs-dismiss="modal" aria-label="Close">
+                    <i class="fa fa-times"></i>
+                </button>
+                <div class="auth-notice-head">
+                    <div class="auth-notice-icon">
+                        <i class="fa fa-bell"></i>
+                    </div>
+                    <h5 id="feeNoticeModalLabel">Accommodation Fee Notice</h5>
+                    <span class="auth-notice-badge">2026/2027 Session</span>
                 </div>
-                <div class="modal-body text-center p-4">
-                    <p class="fs-16">This is to formally inform all students that the accommodation fee for old <strong>PA-ETOS Hostel</strong> for the <strong>2026/2027 academic session</strong> is <strong>&#8358;400,000 (Four Hundred Thousand Naira)</strong> only.</p>
-                    <div class="mt-4 text-end">
-                        <p class="mb-0"><strong>Signed</strong></p>
-                        <p class="text-muted">Management</p>
+                <div class="auth-notice-body">
+                    <p class="auth-notice-text">This is to formally inform all students that the accommodation fee for old <strong>PA-ETOS Hostel</strong> for the <strong>2026/2027 academic session</strong> is:</p>
+                    <div class="auth-notice-amount">
+                        <span class="auth-notice-amount-label">Accommodation Fee</span>
+                        <span class="auth-notice-amount-value">&#8358;400,000</span>
+                        <span class="auth-notice-amount-sub">Four Hundred Thousand Naira Only</span>
+                    </div>
+                    <div class="auth-notice-foot">
+                        <span class="auth-notice-sign">Signed</span>
+                        <span class="auth-notice-signer">Management</span>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-primary btn-block" data-bs-dismiss="modal">I Understand</button>
+                <div class="auth-notice-actions">
+                    <button type="button" class="btn btn-primary auth-btn btn-block" data-bs-dismiss="modal">I Understand</button>
                 </div>
             </div>
         </div>

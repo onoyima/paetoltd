@@ -501,6 +501,223 @@
     color: #e5e7eb;
 }
 
+/* ============================================================
+   Accommodation Fee Notice Modal (redesigned)
+   ============================================================ */
+#feeNoticeModal .modal-dialog {
+    max-width: 460px;
+}
+
+#feeNoticeModal .modal-content {
+    border: none;
+    border-radius: 20px;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 30px 70px rgba(0, 0, 0, 0.25);
+}
+
+.auth-notice-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    z-index: 3;
+    width: 34px;
+    height: 34px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.18);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.auth-notice-close:hover {
+    background: rgba(255, 255, 255, 0.32);
+    transform: rotate(90deg);
+    color: #fff;
+}
+
+.auth-notice-head {
+    position: relative;
+    text-align: center;
+    padding: 34px 28px 24px;
+    background: linear-gradient(160deg, #B22222 0%, #d1302a 55%, #e0473a 100%);
+    color: #fff;
+    overflow: hidden;
+}
+
+.auth-notice-head::before,
+.auth-notice-head::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    border: 2px solid rgba(255, 255, 255, 0.12);
+    pointer-events: none;
+}
+
+.auth-notice-head::before {
+    width: 190px;
+    height: 190px;
+    top: -70px;
+    right: -70px;
+}
+
+.auth-notice-head::after {
+    width: 140px;
+    height: 140px;
+    bottom: -55px;
+    left: -55px;
+}
+
+.auth-notice-icon {
+    position: relative;
+    z-index: 1;
+    width: 66px;
+    height: 66px;
+    margin: 0 auto 14px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.16);
+    border: 1px solid rgba(255, 255, 255, 0.30);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 26px;
+    color: #F5C518;
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.16);
+}
+
+.auth-notice-head h5 {
+    position: relative;
+    z-index: 1;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: 0.3px;
+    color: #fff;
+    margin: 0;
+}
+
+.auth-notice-badge {
+    position: relative;
+    z-index: 1;
+    display: inline-block;
+    margin-top: 12px;
+    padding: 5px 14px;
+    border-radius: 999px;
+    background: rgba(212, 175, 55, 0.22);
+    border: 1px solid rgba(212, 175, 55, 0.45);
+    color: #FFE9A8;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+}
+
+.auth-notice-body {
+    padding: 26px 30px 6px;
+}
+
+.auth-notice-text {
+    color: #4b5563;
+    font-size: 14.5px;
+    line-height: 1.65;
+    margin-bottom: 20px;
+}
+
+.auth-notice-text strong {
+    color: #111827;
+    font-weight: 700;
+}
+
+.auth-notice-amount {
+    background: linear-gradient(135deg, #fffdf5, #fbf3df);
+    border: 1px solid #f0e3bf;
+    border-radius: 14px;
+    text-align: center;
+    padding: 18px 16px;
+    margin-bottom: 18px;
+}
+
+.auth-notice-amount-label {
+    display: block;
+    font-size: 12px;
+    letter-spacing: 1.4px;
+    text-transform: uppercase;
+    color: #9a7d1e;
+    font-weight: 700;
+}
+
+.auth-notice-amount-value {
+    display: block;
+    font-size: 36px;
+    font-weight: 800;
+    color: #B22222;
+    line-height: 1.15;
+    margin-top: 4px;
+}
+
+.auth-notice-amount-sub {
+    display: block;
+    font-size: 12.5px;
+    color: #8a7440;
+    margin-top: 5px;
+    font-style: italic;
+}
+
+.auth-notice-foot {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    padding: 2px 2px 16px;
+}
+
+.auth-notice-sign {
+    color: #111827;
+    font-size: 14px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.6px;
+}
+
+.auth-notice-signer {
+    color: #6b7280;
+    font-size: 13px;
+}
+
+.auth-notice-actions {
+    padding: 0 30px 30px;
+}
+
+[data-theme-version="dark"] #feeNoticeModal .modal-content {
+    background: #1f242a;
+}
+
+[data-theme-version="dark"] #feeNoticeModal .auth-notice-text {
+    color: #cbd5e1;
+}
+
+[data-theme-version="dark"] #feeNoticeModal .auth-notice-text strong {
+    color: #f1f5f9;
+}
+
+[data-theme-version="dark"] #feeNoticeModal .auth-notice-amount {
+    background: #232830;
+    border-color: #3d4450;
+}
+
+[data-theme-version="dark"] #feeNoticeModal .auth-notice-amount-value {
+    color: #ef4444;
+}
+
+[data-theme-version="dark"] #feeNoticeModal .auth-notice-sign {
+    color: #f1f5f9;
+}
+
+[data-theme-version="dark"] #feeNoticeModal .auth-notice-signer {
+    color: #94a3b8;
+}
+
 /* ---- Responsive ---- */
 @media (max-width: 991.98px) {
     .auth-aside {

@@ -17,13 +17,18 @@
        <link href="img/logo.png" rel="icon">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/site.css">
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
                         'brand-red': '#B22222',
+                        'brand-red-dark': '#8B1A1A',
+                        'brand-red-light': '#F9E3E3',
                         'brand-gold': '#D4AF37',
+                        'brand-gold-dark': '#B8962F',
+                        'brand-gold-light': '#F9F3DE',
                         'brand-white': '#FFFFFF',
                         'brand-dark': '#333333',
                     },
@@ -70,7 +75,7 @@
             top: 24px;
             height: 100%;
             width: 2px;
-            background: #b91c1c;
+            background: #B22222;
         }
 
         .nav-link {
@@ -82,7 +87,7 @@
             position: absolute;
             width: 0;
             height: 2px;
-            background: #b91c1c;
+            background: #B22222;
             bottom: 0;
             left: 0;
             transition: width 0.3s ease;
@@ -131,6 +136,15 @@
 </head>
 
 <body class="bg-gray-50">
+    <!-- Preloader -->
+    <div id="preloader">
+        <div class="preloader-logo">
+            <img src="img/logo.png" alt="PA-ETOS">
+        </div>
+        <p class="preloader-title">PA-<span>ETOS</span></p>
+        <div class="preloader-bar"><i></i></div>
+    </div>
+
     <!-- Header/Navigation -->
     <header class="sticky top-0 z-50 bg-white shadow-md">
         <div class="container mx-auto px-4 py-3 flex justify-between items-center">
@@ -139,16 +153,16 @@
                     <a href="/" class="w-12 h-12 rounded-full flex items-center justify-center mr-3">
                         <img src="img/logo.png" alt="Logo">
                     </a>
-                    <h1 class="text-xl font-bold text-red-600">PA-ETOS <span class="text-gray-800">LIMITED</span></h1>
+                    <h1 class="text-xl font-bold text-brand-red">PA-ETOS <span class="text-gray-800">LIMITED</span></h1>
                 </div>
             </div>
             <nav class="hidden md:flex space-x-8">
-                <a href="index.html#home" class="nav-link text-gray-800 font-medium hover:text-red-600">Home</a>
-                <a href="index.html#about" class="nav-link text-gray-800 font-medium hover:text-red-600">About</a>
-                <a href="index.html#services" class="nav-link text-gray-800 font-medium hover:text-red-600">Services</a>
-                <a href="gallery.html" class="nav-link text-gray-800 font-medium hover:text-red-600">Gallery</a>
-                <a href="index.html#contact" class="nav-link text-gray-800 font-medium hover:text-red-600">Contact</a>
-                <a href="paetoshostel.html" class="nav-link bg-red-900 rounded-md px-3  text-white font-medium hover:text-red-600">PA-ETOS Hostel</a>
+                <a href="index.html#home" class="nav-link text-gray-800 font-medium hover:text-brand-red">Home</a>
+                <a href="index.html#about" class="nav-link text-gray-800 font-medium hover:text-brand-red">About</a>
+                <a href="index.html#services" class="nav-link text-gray-800 font-medium hover:text-brand-red">Services</a>
+                <a href="gallery.html" class="nav-link text-gray-800 font-medium hover:text-brand-red">Gallery</a>
+                <a href="index.html#contact" class="nav-link text-gray-800 font-medium hover:text-brand-red">Contact</a>
+                <a href="paetoshostel.html" class="nav-link bg-brand-red rounded-md px-3  text-white font-medium hover:text-brand-red">PA-ETOS Hostel</a>
             </nav>
             <button class="md:hidden text-gray-800" id="menu-toggle">
                 <i class="fas fa-bars text-2xl"></i>
@@ -157,12 +171,12 @@
         <!-- Mobile Menu -->
         <div class="md:hidden hidden bg-white w-full py-3 px-4 shadow-md" id="mobile-menu">
             <div class="flex flex-col space-y-3">
-                <a href="index.html#home" class="nav-link text-gray-800 font-medium hover:text-red-600">Home</a>
-                <a href="index.html#about" class="nav-link text-gray-800 font-medium hover:text-red-600">About</a>
-                <a href="index.html#services" class="nav-link text-gray-800 font-medium hover:text-red-600">Services</a>
-                <a href="gallery.html" class="nav-link text-gray-800 font-medium hover:text-red-600">Gallery</a>
-                <a href="index.html#contact" class="nav-link text-gray-800 font-medium hover:text-red-600">Contact</a>
-                <a href="paetoshostel.html" class="nav-link bg-red-900 text-gray-800 font-medium hover:text-red-600">Hostel</a>
+                <a href="index.html#home" class="nav-link text-gray-800 font-medium hover:text-brand-red">Home</a>
+                <a href="index.html#about" class="nav-link text-gray-800 font-medium hover:text-brand-red">About</a>
+                <a href="index.html#services" class="nav-link text-gray-800 font-medium hover:text-brand-red">Services</a>
+                <a href="gallery.html" class="nav-link text-gray-800 font-medium hover:text-brand-red">Gallery</a>
+                <a href="index.html#contact" class="nav-link text-gray-800 font-medium hover:text-brand-red">Contact</a>
+				<a href="paetoshostel.html" class="nav-link bg-brand-red text-white font-medium hover:text-brand-red">Hostel</a>
             </div>
         </div>
     </header>
@@ -170,15 +184,15 @@
     <!-- Hero Slider Section -->
     <section id="home" class="relative h-screen overflow-hidden">
         <!-- Slide 1 -->
-        <div class="hero-slide absolute inset-0 flex items-center justify-center text-white opacity-100"
+        <div class="hero-slide kenburns absolute inset-0 flex items-center justify-center text-white opacity-100"
             style="background: url('img/carousel-1.png');">
             <div class="container mx-auto px-4 text-center">
-                <h1 class="text-4xl md:text-6xl font-bold mb-6 ">Reliable project contractor with a proven <span
-                        class="text-red-500">Track record of success</span></h1>
-                <p class="text-xl md:text-2xl mb-8 max-w-3xl mx-auto text-gray-800"></p>
+                <h1 class="text-4xl md:text-6xl font-bold mb-6">A reliable contractor with a proven <span
+                        class="text-brand-gold">track record of success</span></h1>
+                <p class="text-xl md:text-2xl mb-8 max-w-3xl mx-auto text-white/90">Delivering quality construction and engineering solutions across Nigeria since 1991.</p>
                 <div class="flex flex-col sm:flex-row justify-center gap-4">
                     <a href="#contact"
-                        class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300">Get
+                        class="bg-brand-red hover:bg-brand-red-dark text-white font-bold py-3 px-6 rounded-lg transition duration-300">Get
                         In Touch</a>
                     <a href="#services"
                         class="bg-transparent border-2 border-white hover:bg-white hover:text-gray-900 text-white font-bold py-3 px-6 rounded-lg transition duration-300">Our
@@ -189,15 +203,15 @@
 
       
       
-        <div class="hero-slide absolute inset-0 flex items-center justify-center text-white opacity-0"
+        <div class="hero-slide kenburns absolute inset-0 flex items-center justify-center text-white opacity-0"
             style="background: url('img/carousel-2.png');">
             <div class="container mx-auto px-4 text-center">
-                <h1 class="text-4xl md:text-6xl font-bold mb-6"> Building the future <span class="text-red-500">Together</span>
+                <h1 class="text-4xl md:text-6xl font-bold mb-6">Building the future <span class="text-brand-gold">together</span>
                 </h1>
-                <p class="text-xl md:text-2xl mb-8 max-w-3xl mx-auto "></p>
+                <p class="text-xl md:text-2xl mb-8 max-w-3xl mx-auto text-white/90">From roads and buildings to electrification and general supplies — we build lasting value.</p>
                 <div class="flex flex-col sm:flex-row justify-center gap-4">
                     <a href="#services"
-                        class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300">Our
+                        class="bg-brand-red hover:bg-brand-red-dark text-white font-bold py-3 px-6 rounded-lg transition duration-300">Our
                         Services</a>
                     <a href="#team"
                         class="bg-transparent border-2 border-white hover:bg-white hover:text-gray-900 text-white font-bold py-3 px-6 rounded-lg transition duration-300">Meet
@@ -206,15 +220,15 @@
             </div>
         </div>
 
-        <div class="hero-slide absolute inset-0 flex items-center justify-center text-white opacity-0"
+        <div class="hero-slide kenburns absolute inset-0 flex items-center justify-center text-white opacity-0"
             style="background: url('img/carousel-3.jpg');">
             <div class="container mx-auto px-4 text-center">
-                <h1 class="text-4xl md:text-6xl font-bold mb-6 ">Reliable project contractor with a proven <span
-                    class="text-red-500">Track record of success</span></h1>
-                <p class="text-xl md:text-2xl mb-8 max-w-3xl mx-auto text-gray-800">PA-ETOS LIMITED delivers high-quality project contracts with excellence, innovation, and integrity since 1991.</p>
+                <h1 class="text-4xl md:text-6xl font-bold mb-6">Building Nigeria's infrastructure, <span
+                    class="text-brand-gold">one project at a time</span></h1>
+                <p class="text-xl md:text-2xl mb-8 max-w-3xl mx-auto text-white/90">PA-ETOS LIMITED delivers high-quality project contracts with excellence, innovation, and integrity since 1991.</p>
                 <div class="flex flex-col sm:flex-row justify-center gap-4">
                     <a href="#services"
-                        class="bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300">Our
+                        class="bg-brand-red hover:bg-brand-red-dark text-white font-bold py-3 px-6 rounded-lg transition duration-300">Our
                         Services</a>
                     <a href="#team"
                         class="bg-transparent border-2 border-white hover:bg-white hover:text-gray-900 text-white font-bold py-3 px-6 rounded-lg transition duration-300">Meet
@@ -244,70 +258,109 @@
     <!-- About Section -->
     <section id="about" class="py-20 bg-white">
         <div class="container mx-auto px-4">
-            <div class="text-center mb-16">
-                <div class="text-center mb-16">
-                    <h2 class="text-3xl md:text-4xl font-bold mb-4">About <span class="text-brand-red">PA-ETOS</span>
-                        <span class="text-brand-gold">LIMITED</span>
-                    </h2>
-                    <div class="w-24 h-1 bg-brand-gold mx-auto"></div>
-                </div>
-
-                <!-- <p class="text-gray-600 max-w-3xl mx-auto"> -->
-
-                    <p class="mb-6 text-gray-700 leading-relaxed">
-                        PA-ETOS LIMITED is a leading project contractor with a strong reputation for delivering high-quality projects in various sectors.<br>
-                        Our team of experts has extensive experience in the under listed areas:
-                    </p>
-                    <ul class="list-decimal list-inside text-gray-700 mb-6 leading-relaxed">
-                        <li>Road Construction</li>
-                        <li>Building</li>
-                        <li>Electrification / Solar Energy</li>
-                        <li>General Supplies of Goods</li>
-                        <li>Equipment Leasing</li>
-                        <li>Build Operate Transfer</li>
-                        <li>Contract Partnership, etc.</li>
-                    </ul>
-                    
-                <p class="mb-6 text-gray-700 leading-relaxed">
-                    We ensure that our clients receive comprehensive solutions that meet their needs. We are committed to delivering top-notch services, adhering to quality standards, and ensuring client satisfaction. With a skilled team of professionals and a proven track record in the industry, we stand out as a reliable partner for projects of varying scales.
-                </p>
-                <p class="text-gray-700 leading-relaxed">
-                    PA-ETOS LIMITED was established in September 1991 with a vision to provide exceptional services that prioritize client satisfaction, safety, and sustainability. Over the years, we have successfully completed numerous contract projects for government agencies and private entities, earning us a reputation as a trusted and reliable partner in the industry.
-                </p>
-
-
-
-                <!-- </p> -->
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-3xl md:text-4xl font-bold mb-4">About <span class="text-brand-red">PA-ETOS</span>
+                    <span class="text-brand-gold">LIMITED</span>
+                </h2>
+                <div class="w-24 h-1 bg-brand-gold mx-auto"></div>
             </div>
 
-            <div class="flex flex-col lg:flex-row items-center gap-12">
-                <div class="lg:w-1/2">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-16">
+                <div class="reveal-left">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-6">Who <span class="text-brand-red">We Are</span></h3>
+                    <p class="text-gray-600 leading-relaxed mb-8">
+                        PA-ETOS LIMITED is a leading project contractor with a strong reputation for delivering
+                        high-quality projects across various sectors. Our team of experts has extensive experience
+                        in the under-listed areas:
+                    </p>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="flex items-center gap-3 bg-gray-50 border border-gray-100 rounded-lg px-4 py-3">
+                            <i class="fas fa-check-circle text-brand-red"></i>
+                            <span class="text-gray-700 font-medium">Road Construction</span>
+                        </div>
+                        <div class="flex items-center gap-3 bg-gray-50 border border-gray-100 rounded-lg px-4 py-3">
+                            <i class="fas fa-check-circle text-brand-red"></i>
+                            <span class="text-gray-700 font-medium">Building</span>
+                        </div>
+                        <div class="flex items-center gap-3 bg-gray-50 border border-gray-100 rounded-lg px-4 py-3">
+                            <i class="fas fa-check-circle text-brand-red"></i>
+                            <span class="text-gray-700 font-medium">Electrification / Solar Energy</span>
+                        </div>
+                        <div class="flex items-center gap-3 bg-gray-50 border border-gray-100 rounded-lg px-4 py-3">
+                            <i class="fas fa-check-circle text-brand-red"></i>
+                            <span class="text-gray-700 font-medium">General Supplies of Goods</span>
+                        </div>
+                        <div class="flex items-center gap-3 bg-gray-50 border border-gray-100 rounded-lg px-4 py-3">
+                            <i class="fas fa-check-circle text-brand-red"></i>
+                            <span class="text-gray-700 font-medium">Equipment Leasing</span>
+                        </div>
+                        <div class="flex items-center gap-3 bg-gray-50 border border-gray-100 rounded-lg px-4 py-3">
+                            <i class="fas fa-check-circle text-brand-red"></i>
+                            <span class="text-gray-700 font-medium">Build Operate Transfer</span>
+                        </div>
+                        <div class="flex items-center gap-3 bg-gray-50 border border-gray-100 rounded-lg px-4 py-3 sm:col-span-2">
+                            <i class="fas fa-check-circle text-brand-red"></i>
+                            <span class="text-gray-700 font-medium">Contract Partnership, etc.</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="lg:pl-8 reveal-right">
+                    <p class="text-gray-600 leading-relaxed mb-6">
+                        We are committed to delivering top-notch services that meet strict quality standards and ensure
+                        client satisfaction. With a skilled team of professionals and a proven track record, we are a
+                        reliable partner for projects of every scale.
+                    </p>
+                    <p class="text-gray-600 leading-relaxed mb-8">
+                        PA-ETOS LIMITED was established in September 1991 with a vision to provide exceptional services
+                        that prioritize client satisfaction, safety, and sustainability. Over the years, we have
+                        successfully completed numerous contract projects for government agencies and private entities,
+                        earning us a reputation as a trusted and reliable partner in the industry.
+                    </p>
+                    <div class="grid grid-cols-3 gap-4">
+                        <div class="bg-brand-red-light rounded-lg p-5 text-center">
+                            <p class="text-3xl font-bold text-brand-red"><span data-count="30" data-suffix="+">0</span></p>
+                            <p class="text-sm text-gray-600 mt-1">Years of Experience</p>
+                        </div>
+                        <div class="bg-brand-gold-light rounded-lg p-5 text-center">
+                            <p class="text-3xl font-bold text-brand-gold-dark"><span data-count="150" data-suffix="+">0</span></p>
+                            <p class="text-sm text-gray-600 mt-1">Projects Delivered</p>
+                        </div>
+                        <div class="bg-brand-red-light rounded-lg p-5 text-center">
+                            <p class="text-3xl font-bold text-brand-red"><span data-count="99" data-suffix="%">0</span></p>
+                            <p class="text-sm text-gray-600 mt-1">Client Satisfaction</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex flex-col lg:flex-row items-center gap-12 reveal">
+                <div class="lg:w-1/2 reveal-left">
                     <img src="img/about.jpg"
                         alt="Construction Site" class="rounded-lg shadow-xl w-full h-auto">
                 </div>
-                <div class="lg:w-1/2">
-                    <h3 class="text-2xl font-bold text-gray-800 mb-6">Our <span class="text-red-600">Mission</span></h3>
+                <div class="lg:w-1/2 reveal-right">
+                    <h3 class="text-2xl font-bold text-gray-800 mb-6">Our <span class="text-brand-red">Mission</span></h3>
                     <p class="text-gray-600 mb-6">Our mission is to provide innovative, sustainable, and safe
                         construction solutions that exceed our clients' expectations, while maintaining the highest
                         standards of quality, integrity, and social responsibility.</p>
 
-                    <h3 class="text-2xl font-bold text-gray-800 mb-6 mt-8">Our <span class="text-red-600">History</span>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-6 mt-8">Our <span class="text-brand-red">History</span>
                     </h3>
                     <div class="relative">
                         <div class="timeline-item relative pl-8 pb-8">
-                            <div class="absolute left-0 top-0 w-4 h-4 bg-red-600 rounded-full"></div>
+                            <div class="absolute left-0 top-0 w-4 h-4 bg-brand-red rounded-full"></div>
                             <h4 class="font-bold text-gray-800">1991 - Foundation</h4>
                             <p class="text-gray-600">PA-ETOS LIMITED was established with a vision to provide
                                 exceptional construction services.</p>
                         </div>
                         <div class="timeline-item relative pl-8 pb-8">
-                            <div class="absolute left-0 top-0 w-4 h-4 bg-red-600 rounded-full"></div>
+                            <div class="absolute left-0 top-0 w-4 h-4 bg-brand-red rounded-full"></div>
                             <h4 class="font-bold text-gray-800">2000s - Expansion</h4>
                             <p class="text-gray-600">Expanded our services to include civil, building, and electrical
                                 engineering projects.</p>
                         </div>
                         <div class="timeline-item relative pl-8">
-                            <div class="absolute left-0 top-0 w-4 h-4 bg-red-600 rounded-full"></div>
+                            <div class="absolute left-0 top-0 w-4 h-4 bg-brand-red rounded-full"></div>
                             <h4 class="font-bold text-gray-800">Present - Industry Leader</h4>
                             <p class="text-gray-600">Recognized as a trusted and reliable partner in the construction
                                 industry with numerous successful projects.</p>
@@ -318,8 +371,8 @@
         </div>
     </section>
 
-    <!-- About Section -->
-    <section id="about" class="py-20 bg-white">
+    <!-- Core Values Section -->
+    <section id="values" class="py-20 bg-white">
         <div class="container mx-auto px-4">
 
 
@@ -329,7 +382,7 @@
                 <div class="bg-gray-100 p-8 rounded-lg shadow-lg">
                     <h3 class="text-2xl font-semibold mb-6 text-center">Our Core Values</h3>
                     <div class="grid grid-cols-2 gap-6">
-                        <div class="flex flex-col items-center p-4 bg-white rounded-lg shadow-sm">
+                        <div class="flex flex-col items-center p-4 bg-white rounded-lg shadow-sm reveal">
                             <div class="w-16 h-16 rounded-full bg-brand-red flex items-center justify-center mb-4">
                                 <i class="fas fa-hard-hat text-white text-2xl"></i>
                             </div>
@@ -338,7 +391,7 @@
                                 clients</p>
                         </div>
 
-                        <div class="flex flex-col items-center p-4 bg-white rounded-lg shadow-sm">
+                        <div class="flex flex-col items-center p-4 bg-white rounded-lg shadow-sm reveal">
                             <div class="w-16 h-16 rounded-full bg-brand-gold flex items-center justify-center mb-4">
                                 <i class="fas fa-award text-white text-2xl"></i>
                             </div>
@@ -346,7 +399,7 @@
                             <p class="text-center text-sm text-gray-600">Delivering excellence in every project</p>
                         </div>
 
-                        <div class="flex flex-col items-center p-4 bg-white rounded-lg shadow-sm">
+                        <div class="flex flex-col items-center p-4 bg-white rounded-lg shadow-sm reveal">
                             <div class="w-16 h-16 rounded-full bg-brand-red flex items-center justify-center mb-4">
                                 <i class="fas fa-lightbulb text-white text-2xl"></i>
                             </div>
@@ -354,7 +407,7 @@
                             <p class="text-center text-sm text-gray-600">Embracing new ideas and technologies</p>
                         </div>
 
-                        <div class="flex flex-col items-center p-4 bg-white rounded-lg shadow-sm">
+                        <div class="flex flex-col items-center p-4 bg-white rounded-lg shadow-sm reveal">
                             <div class="w-16 h-16 rounded-full bg-brand-gold flex items-center justify-center mb-4">
                                 <i class="fas fa-leaf text-white text-2xl"></i>
                             </div>
@@ -362,7 +415,7 @@
                             <p class="text-center text-sm text-gray-600">Building with environmental responsibility</p>
                         </div>
 
-                        <div class="flex flex-col items-center p-4 bg-white rounded-lg shadow-sm">
+                        <div class="flex flex-col items-center p-4 bg-white rounded-lg shadow-sm reveal">
                             <div class="w-16 h-16 rounded-full bg-brand-red flex items-center justify-center mb-4">
                                 <i class="fas fa-balance-scale text-white text-2xl"></i>
                             </div>
@@ -370,7 +423,7 @@
                             <p class="text-center text-sm text-gray-600">Conducting business with honesty and ethics</p>
                         </div>
 
-                        <div class="flex flex-col items-center p-4 bg-white rounded-lg shadow-sm">
+                        <div class="flex flex-col items-center p-4 bg-white rounded-lg shadow-sm reveal">
                             <div class="w-16 h-16 rounded-full bg-brand-gold flex items-center justify-center mb-4">
                                 <i class="fas fa-users text-white text-2xl"></i>
                             </div>
@@ -392,7 +445,7 @@
     <!-- Services Section -->
     <section id="services" class="py-20 bg-gray-50">
         <div class="container mx-auto px-4">
-            <div class="text-center mb-16">
+            <div class="text-center mb-16 reveal">
                 <h2 class="text-3xl md:text-4xl font-bold mb-4">Our Services</h2>
                 <p class="text-xl text-gray-600 max-w-3xl mx-auto">Comprehensive construction solutions tailored to meet
                     your specific needs</p>
@@ -401,10 +454,10 @@
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <!-- Electrical Engineering -->
-                <div class="service-card bg-white rounded-lg shadow-lg overflow-hidden transition-all duration-300">
+                <div class="service-card bg-white rounded-lg shadow-lg overflow-hidden transition-all duration-300 reveal">
                     <div class="h-3 bg-brand-red"></div>
                     <div class="p-6">
-                        <div class="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mb-6 mx-auto">
+                        <div class="w-16 h-16 rounded-full bg-brand-red-light flex items-center justify-center mb-6 mx-auto">
                             <i class="fas fa-bolt text-brand-red text-2xl"></i>
                         </div>
                         <h3 class="text-2xl font-semibold mb-4 text-center">Electrical Engineering</h3>
@@ -431,10 +484,10 @@
                 </div>
 
                 <!-- Civil Engineering -->
-                <div class="service-card bg-white rounded-lg shadow-lg overflow-hidden transition-all duration-300">
+                <div class="service-card bg-white rounded-lg shadow-lg overflow-hidden transition-all duration-300 reveal reveal-delay-1">
                     <div class="h-3 bg-brand-gold"></div>
                     <div class="p-6">
-                        <div class="w-16 h-16 rounded-full bg-yellow-100 flex items-center justify-center mb-6 mx-auto">
+                        <div class="w-16 h-16 rounded-full bg-brand-gold-light flex items-center justify-center mb-6 mx-auto">
                             <i class="fas fa-road text-brand-gold text-2xl"></i>
                         </div>
                         <h3 class="text-2xl font-semibold mb-4 text-center">Civil Engineering</h3>
@@ -461,10 +514,10 @@
                 </div>
 
                 <!-- Building Engineering -->
-                <div class="service-card bg-white rounded-lg shadow-lg overflow-hidden transition-all duration-300">
+                <div class="service-card bg-white rounded-lg shadow-lg overflow-hidden transition-all duration-300 reveal reveal-delay-2">
                     <div class="h-3 bg-brand-red"></div>
                     <div class="p-6">
-                        <div class="w-16 h-16 rounded-full bg-red-100 flex items-center justify-center mb-6 mx-auto">
+                        <div class="w-16 h-16 rounded-full bg-brand-red-light flex items-center justify-center mb-6 mx-auto">
                             <i class="fas fa-building text-brand-red text-2xl"></i>
                         </div>
                         <h3 class="text-2xl font-semibold mb-4 text-center">Building Engineering</h3>
@@ -516,60 +569,60 @@
         <!-- Specializations -->
             <!-- Specializations -->
 <div class="mt-20">
-    <h3 class="text-2xl font-bold text-center text-gray-800 mb-8">Our <span class="text-red-600">Specializations</span></h3>
+    <h3 class="text-2xl font-bold text-center text-gray-800 mb-8">Our <span class="text-brand-red">Specializations</span></h3>
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
         <div class="bg-white p-6 rounded-lg shadow-md text-center">
-            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <i class="fas fa-road text-red-600 text-2xl"></i>
+            <div class="w-16 h-16 bg-brand-red-light rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-road text-brand-red text-2xl"></i>
             </div>
             <h4 class="font-bold text-gray-800">Road Construction</h4>
             <p class="text-gray-600 text-sm mt-1">Highways, Streets & Access Roads</p>
         </div>
         <div class="bg-white p-6 rounded-lg shadow-md text-center">
-            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <i class="fas fa-building text-red-600 text-2xl"></i>
+            <div class="w-16 h-16 bg-brand-red-light rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-building text-brand-red text-2xl"></i>
             </div>
             <h4 class="font-bold text-gray-800">Building Construction</h4>
             <p class="text-gray-600 text-sm mt-1">Residential, Commercial & Institutional</p>
         </div>
         <div class="bg-white p-6 rounded-lg shadow-md text-center">
-            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <i class="fas fa-solar-panel text-red-600 text-2xl"></i>
+            <div class="w-16 h-16 bg-brand-red-light rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-solar-panel text-brand-red text-2xl"></i>
             </div>
             <h4 class="font-bold text-gray-800">Electrification / Solar</h4>
             <p class="text-gray-600 text-sm mt-1">Rural Electrification & Solar Systems</p>
         </div>
         <div class="bg-white p-6 rounded-lg shadow-md text-center">
-            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <i class="fas fa-box-open text-red-600 text-2xl"></i>
+            <div class="w-16 h-16 bg-brand-red-light rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-box-open text-brand-red text-2xl"></i>
             </div>
             <h4 class="font-bold text-gray-800">General Supplies</h4>
             <p class="text-gray-600 text-sm mt-1">Goods & Services Procurement</p>
         </div>
         <div class="bg-white p-6 rounded-lg shadow-md text-center">
-            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <i class="fas fa-truck-moving text-red-600 text-2xl"></i>
+            <div class="w-16 h-16 bg-brand-red-light rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-truck-moving text-brand-red text-2xl"></i>
             </div>
             <h4 class="font-bold text-gray-800">Equipment Leasing</h4>
             <p class="text-gray-600 text-sm mt-1">Construction & Industrial Equipment</p>
         </div>
         <div class="bg-white p-6 rounded-lg shadow-md text-center">
-            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <i class="fas fa-exchange-alt text-red-600 text-2xl"></i>
+            <div class="w-16 h-16 bg-brand-red-light rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-exchange-alt text-brand-red text-2xl"></i>
             </div>
             <h4 class="font-bold text-gray-800">Build Operate Transfer</h4>
             <p class="text-gray-600 text-sm mt-1">Sustainable Project Development</p>
         </div>
         <div class="bg-white p-6 rounded-lg shadow-md text-center">
-            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <i class="fas fa-handshake text-red-600 text-2xl"></i>
+            <div class="w-16 h-16 bg-brand-red-light rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-handshake text-brand-red text-2xl"></i>
             </div>
             <h4 class="font-bold text-gray-800">Contract Partnership</h4>
             <p class="text-gray-600 text-sm mt-1">Collaborative Contracting Solutions</p>
         </div>
         <div class="bg-white p-6 rounded-lg shadow-md text-center">
-            <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <i class="fas fa-project-diagram text-red-600 text-2xl"></i>
+            <div class="w-16 h-16 bg-brand-red-light rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-project-diagram text-brand-red text-2xl"></i>
             </div>
             <h4 class="font-bold text-gray-800">Project Consultancy</h4>
             <p class="text-gray-600 text-sm mt-1">Expert Guidance on Project Execution</p>
@@ -584,7 +637,7 @@
     <!-- Projects Section -->
     <section id="projects" class="py-20 bg-white">
         <div class="container mx-auto px-4">
-            <div class="text-center mb-16">
+            <div class="text-center mb-16 reveal">
                 <h2 class="text-3xl md:text-4xl font-bold mb-4">Our Projects</h2>
                 <p class="text-xl text-gray-600 max-w-3xl mx-auto">Showcasing our expertise and commitment to excellence
                 </p>
@@ -593,7 +646,7 @@
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
                 <!-- Project 1 -->
-                <div class="project-card bg-white rounded-lg shadow-lg overflow-hidden">
+                <div class="project-card bg-white rounded-lg shadow-lg overflow-hidden reveal">
                     <div class="h-64 overflow-hidden">
                         <img src="img/road.jpg"
                         alt="" class="rounded-lg shadow-xl w-full h-auto">
@@ -649,7 +702,7 @@
 
             <div class="text-center mt-12">
                 <a href="#contact"
-                    class="inline-block bg-brand-gold hover:bg-yellow-600 text-white font-bold py-3 px-8 rounded-md transition-colors">Discuss
+                    class="inline-block bg-brand-gold hover:bg-brand-gold-dark text-white font-bold py-3 px-8 rounded-md transition-colors">Discuss
                     Your Project</a>
             </div>
         </div>
@@ -659,19 +712,20 @@
         <!-- Projects Section Start -->
 <section id="project" class="py-16 bg-gray-50">
     <div class="container mx-auto px-4">
-        <div class="text-center mb-12">
-            <h2 class="text-3xl font-bold text-gray-800 uppercase">Latest Projects</h2>
+        <div class="text-center mb-12 reveal">
+            <h2 class="text-3xl font-bold text-gray-800">Latest Projects</h2>
+            <div class="w-24 h-1 bg-brand-gold mx-auto mt-4"></div>
         </div>
 
         <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
             <!-- Project Item -->
-            <div class="bg-white shadow-lg rounded-lg overflow-hidden">
+            <div class="bg-white shadow-lg rounded-lg overflow-hidden reveal">
                 <img src="./img/DUALIZATION OF TINAPA ODUKPANI JUNCTION 2.jpg" alt="Project Image" class="w-full h-52 object-cover">
                 <div class="p-6">
-                    <h3 class="text-xl font-semibold mb-2">DUALIZATION OF ROAD</h3>
+                    <h3 class="text-xl font-semibold mb-2">Dualization of Tinapa Road</h3>
                     <p class="text-sm text-gray-600 mb-2">By <span class="text-green-700 font-medium">PA-ETOS</span></p>
-                    <p class="text-sm text-gray-600 mb-4">In <span class="text-blue-600 font-medium">Construction</span></p>
-                    <p class="text-gray-700">DUALIZATION OF TINAPA ODUKPANI JUNCTION 2</p>
+                    <p class="text-sm text-gray-600 mb-4">Status: <span class="text-brand-gold font-medium">In Progress</span></p>
+                    <p class="text-gray-700">Dualization of the Tinapa–Odukpani Junction 2 road.</p>
                 </div>
             </div>
 
@@ -679,10 +733,10 @@
             <div class="bg-white shadow-lg rounded-lg overflow-hidden">
                 <img src="./img/CONCRETE WORK ON RAFT FOUNDATIONS AT SENATE.jpg" alt="Project Image" class="w-full h-52 object-cover">
                 <div class="p-6">
-                    <h3 class="text-xl font-semibold mb-2">ONGOING BUILDING<br>CONSTRUCTION</h3>
+                    <h3 class="text-xl font-semibold mb-2">Senate Building Construction</h3>
                     <p class="text-sm text-gray-600 mb-2">By <span class="text-green-700 font-medium">PA-ETOS</span></p>
-                    <p class="text-sm text-gray-600 mb-4">In <span class="text-blue-600 font-medium">Construction</span></p>
-                    <p class="text-gray-700">CONCRETE WORK ON RAFT FOUNDATIONS AT SENATE</p>
+                    <p class="text-sm text-gray-600 mb-4">Status: <span class="text-brand-gold font-medium">In Progress</span></p>
+                    <p class="text-gray-700">Concrete works on the raft foundations at the Senate building.</p>
                 </div>
             </div>
 
@@ -690,10 +744,10 @@
             <div class="bg-white shadow-lg rounded-lg overflow-hidden">
                 <img src="./img/MD  House in iraokhor, Abuja.jpg" alt="Project Image" class="w-full h-52 object-cover">
                 <div class="p-6">
-                    <h3 class="text-xl font-semibold mb-2">COMPLETED<br>CONSTRUCTION</h3>
+                    <h3 class="text-xl font-semibold mb-2">MD House, Iraokhor</h3>
                     <p class="text-sm text-gray-600 mb-2">By <span class="text-green-700 font-medium">PA-ETOS</span></p>
-                    <p class="text-sm text-gray-600 mb-4">Done <span class="text-blue-600 font-medium">Construction</span></p>
-                    <p class="text-gray-700">MD HOUSE IN IRAOKHOR, ABUJA – Project Site Completion</p>
+                    <p class="text-sm text-gray-600 mb-4">Status: <span class="text-green-600 font-medium">Completed</span></p>
+                    <p class="text-gray-700">Private residence delivered in Iraokhor, Abuja.</p>
                 </div>
             </div>
 
@@ -701,10 +755,10 @@
             <div class="bg-white shadow-lg rounded-lg overflow-hidden">
                 <img src="./img/Limited Rehabilitation Of Agege Motor Road, Route 10 (planning Junction-Airport Interchange)2.jpg" alt="Project Image" class="w-full h-52 object-cover">
                 <div class="p-6">
-                    <h3 class="text-xl font-semibold mb-2">COMPLETED<br>CONSTRUCTION</h3>
+                    <h3 class="text-xl font-semibold mb-2">Agege Motor Road Rehabilitation</h3>
                     <p class="text-sm text-gray-600 mb-2">By <span class="text-green-700 font-medium">PA-ETOS</span></p>
-                    <p class="text-sm text-gray-600 mb-4">Done <span class="text-blue-600 font-medium">Construction</span></p>
-                    <p class="text-gray-700">Planning Junction-Airport Interchange</p>
+                    <p class="text-sm text-gray-600 mb-4">Status: <span class="text-green-600 font-medium">Completed</span></p>
+                    <p class="text-gray-700">Limited rehabilitation of Agege Motor Road, Route 10 (Planning Junction–Airport Interchange).</p>
                 </div>
             </div>
 
@@ -712,10 +766,10 @@
             <div class="bg-white shadow-lg rounded-lg overflow-hidden">
                 <img src="./img/IYAMHO POLICE BARRACK.jpg" alt="Project Image" class="w-full h-52 object-cover">
                 <div class="p-6">
-                    <h3 class="text-xl font-semibold mb-2">COMPLETED<br>CONSTRUCTION</h3>
+                    <h3 class="text-xl font-semibold mb-2">Iyamho Police Barracks</h3>
                     <p class="text-sm text-gray-600 mb-2">By <span class="text-green-700 font-medium">PA-ETOS</span></p>
-                    <p class="text-sm text-gray-600 mb-4">Done <span class="text-blue-600 font-medium">Construction</span></p>
-                    <p class="text-gray-700">IYAMHO POLICE BARRACK – Project Site Completion</p>
+                    <p class="text-sm text-gray-600 mb-4">Status: <span class="text-green-600 font-medium">Completed</span></p>
+                    <p class="text-gray-700">Police barracks project delivered at Iyamho.</p>
                 </div>
             </div>
 
@@ -723,10 +777,10 @@
             <div class="bg-white shadow-lg rounded-lg overflow-hidden">
                 <img src="./img/paetos.jpg" alt="Project Image" class="w-full h-52 object-cover">
                 <div class="p-6">
-                    <h3 class="text-xl font-semibold mb-2">COMPLETED<br>CONSTRUCTION</h3>
+                    <h3 class="text-xl font-semibold mb-2">PA-ETOS Hostel, Veritas University</h3>
                     <p class="text-sm text-gray-600 mb-2">By <span class="text-green-700 font-medium">PA-ETOS</span></p>
-                    <p class="text-sm text-gray-600 mb-4">Done <span class="text-blue-600 font-medium">Construction</span></p>
-                    <p class="text-gray-700">PA-ETOS Hostel, Veritas University Abuja – Project Site Completion</p>
+                    <p class="text-sm text-gray-600 mb-4">Status: <span class="text-green-600 font-medium">Completed</span></p>
+                    <p class="text-gray-700">Hostel accommodation project completed at Veritas University, Abuja.</p>
                 </div>
             </div>
         </div>
@@ -738,22 +792,22 @@
     <!-- Team Section -->
     <section id="team" class="py-20 bg-gray-100">
         <div class="container mx-auto px-4">
-            <div class="text-center mb-16">
-                <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4">Our <span class="text-red-600">Management
+            <div class="text-center mb-16 reveal">
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4">Our <span class="text-brand-red">Management
                         Team</span></h2>
-                <div class="w-20 h-1 bg-red-600 mx-auto mb-6"></div>
+                <div class="w-20 h-1 bg-brand-red mx-auto mb-6"></div>
                 <p class="text-gray-600 max-w-3xl mx-auto">Meet the skilled professionals leading PA-ETOS LIMITED to
                     excellence.</p>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div class="bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="bg-white rounded-lg shadow-md overflow-hidden reveal">
                     <div class="h-64 bg-gray-300 flex items-center justify-center">
                         <i class="fas fa-user-tie text-gray-500 text-6xl"></i>
                     </div>
                     <div class="p-6 text-center">
                         <h3 class="text-xl font-bold text-gray-800 mb-1">Chief Pius Etokhana</h3>
-                        <p class="text-red-600 font-medium mb-3">Chairman /CEO</p>
+                        <p class="text-brand-red font-medium mb-3">Chairman / CEO</p>
                         <!-- <p class="text-gray-600">Visionary leader with decades of experience in the construction
                             industry.</p> -->
                     </div>
@@ -765,7 +819,7 @@
                     </div>
                     <div class="p-6 text-center">
                         <h3 class="text-xl font-bold text-gray-800 mb-1">Dr. Harrison Etokhana</h3>
-                        <p class="text-red-600 font-medium mb-3">Director</p>
+                        <p class="text-brand-red font-medium mb-3">Director</p>
                         <!-- <p class="text-gray-600">Expert in engineering solutions and technical project management.</p> -->
                     </div>
                 </div>
@@ -776,7 +830,7 @@
                     </div>
                     <div class="p-6 text-center">
                         <h3 class="text-xl font-bold text-gray-800 mb-1">Engr. Marvinson Etokhana</h3>
-                        <p class="text-red-600 font-medium mb-3"> Director</p>
+                        <p class="text-brand-red font-medium mb-3"> Director</p>
                         <!-- <p class="text-gray-600">Oversees all operational aspects ensuring efficiency and quality.</p> -->
                     </div>
                 </div>
@@ -786,7 +840,7 @@
                     </div>
                     <div class="p-6 text-center">
                         <h3 class="text-xl font-bold text-gray-800 mb-1">Engr. Kelvinson Etokhana</h3>
-                        <p class="text-red-600 font-medium mb-3"> Director</p>
+                        <p class="text-brand-red font-medium mb-3"> Director</p>
                         <!-- <p class="text-gray-600">Oversees all operational aspects ensuring efficiency and quality.</p> -->
                     </div>
                 </div>
@@ -796,7 +850,7 @@
                     </div>
                     <div class="p-6 text-center">
                         <h3 class="text-xl font-bold text-gray-800 mb-1">Dr. Bar. Sharon Etokhana</h3>
-                        <p class="text-red-600 font-medium mb-3"> Executive Secretary</p>
+                        <p class="text-brand-red font-medium mb-3"> Executive Secretary</p>
                         <!-- <p class="text-gray-600">Oversees all operational aspects ensuring efficiency and quality.</p> -->
                     </div>
                 </div>
@@ -806,7 +860,7 @@
                     </div>
                     <div class="p-6 text-center">
                         <h3 class="text-xl font-bold text-gray-800 mb-1">Mr. Austin Eben Uadia</h3>
-                        <p class="text-red-600 font-medium mb-3"> Operational Manager</p>
+                        <p class="text-brand-red font-medium mb-3"> Operational Manager</p>
                         <!-- <p class="text-gray-600">Oversees all operational aspects ensuring efficiency and quality.</p> -->
                     </div>
                 </div>
@@ -818,23 +872,23 @@
     <!-- Contact Section -->
     <section id="contact" class="py-20 bg-white">
         <div class="container mx-auto px-4">
-            <div class="text-center mb-16">
+            <div class="text-center mb-16 reveal">
                 <h2 class="text-3xl md:text-4xl font-bold text-gray-800 mb-4">Contact <span
-                        class="text-red-600">Us</span></h2>
-                <div class="w-20 h-1 bg-red-600 mx-auto mb-6"></div>
+                        class="text-brand-red">Us</span></h2>
+                <div class="w-20 h-1 bg-brand-red mx-auto mb-6"></div>
                 <p class="text-gray-600 max-w-3xl mx-auto">Get in touch with our team for your construction needs and
                     inquiries.</p>
             </div>
 
             <div class="flex flex-col lg:flex-row gap-12">
-                <div class="lg:w-1/2">
+                <div class="lg:w-1/2 reveal-left">
                     <div class="bg-gray-100 p-8 rounded-lg shadow-md">
                         <h3 class="text-2xl font-bold text-gray-800 mb-6">Contact <span
-                                class="text-red-600">Information</span></h3>
+                                class="text-brand-red">Information</span></h3>
 
                         <div class="space-y-6">
                             <div class="flex items-start">
-                                <div class="bg-red-600 p-3 rounded-full mr-4">
+                                <div class="bg-brand-red p-3 rounded-full mr-4">
                                     <i class="fas fa-map-marker-alt text-white"></i>
                                 </div>
                                 <div>
@@ -845,7 +899,7 @@
                             </div>
 
                             <div class="flex items-start">
-                                <div class="bg-red-600 p-3 rounded-full mr-4">
+                                <div class="bg-brand-red p-3 rounded-full mr-4">
                                     <i class="fas fa-phone-alt text-white"></i>
                                 </div>
                                 <div>
@@ -857,7 +911,7 @@
                             </div>
 
                             <div class="flex items-start">
-                                <div class="bg-red-600 p-3 rounded-full mr-4">
+                                <div class="bg-brand-red p-3 rounded-full mr-4">
                                     <i class="fas fa-envelope text-white"></i>
                                 </div>
                                 <div>
@@ -868,7 +922,7 @@
                             </div>
 
                             <!-- <div class="flex items-start">
-                                <div class="bg-red-600 p-3 rounded-full mr-4">
+                                <div class="bg-brand-red p-3 rounded-full mr-4">
                                     <i class="fas fa-globe text-white"></i>
                                 </div>
                                 <div>
@@ -881,7 +935,7 @@
                         <!-- Map Section -->
                         <div class="mt-8">
                             <h3 class="text-2xl font-bold text-gray-800 mb-6">Our <span
-                                    class="text-red-600">Location</span></h3>
+                                    class="text-brand-red">Location</span></h3>
                             <div class="map-container">
                                 <iframe class="responsive-iframe"
                                     src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3939.573994903372!2d7.419818584589782!3d9.102514864546539!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x104e758924146105%3A0xcc41d4217d37bc24!2sPlot%201055%20Isa%20Rota%20Cl%2C%20off%20Femi%20Gbajabiamila%20Crescent%2C%20District%2C%20Jahi%20900108%2C%20Federal%20Capital%20Territory!5e0!3m2!1sen!2sng!4v1747958243592!5m2!1sen!2sng"
@@ -893,38 +947,41 @@
                     </div>
                 </div>
 
-                <div class="lg:w-1/2">
+                <div class="lg:w-1/2 reveal-right">
                     <div class="bg-gray-100 p-8 rounded-lg shadow-md">
                         <h3 class="text-2xl font-bold text-gray-800 mb-6">Send Us a <span
-                                class="text-red-600">Message</span></h3>
-                        <form class="space-y-4">
+                                class="text-brand-red">Message</span></h3>
+                        <form id="contactForm" class="space-y-4">
                             <div>
                                 <label for="name" class="block text-gray-700 font-medium mb-2">Your Name</label>
-                                <input type="text" id="name"
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
+                                <input type="text" id="name" name="name" required
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-red">
                             </div>
 
                             <div>
                                 <label for="email" class="block text-gray-700 font-medium mb-2">Your Email</label>
-                                <input type="email" id="email"
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
+                                <input type="email" id="email" name="email" required
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-red">
                             </div>
 
                             <div>
                                 <label for="subject" class="block text-gray-700 font-medium mb-2">Subject</label>
-                                <input type="text" id="subject"
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500">
+                                <input type="text" id="subject" name="subject" required
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-red">
                             </div>
 
                             <div>
                                 <label for="message" class="block text-gray-700 font-medium mb-2">Message</label>
-                                <textarea id="message" rows="5"
-                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"></textarea>
+                                <textarea id="message" name="message" rows="5" required
+                                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-red"></textarea>
                             </div>
 
                             <button type="submit"
-                                class="w-full bg-red-600 hover:bg-red-700 text-white font-bold py-3 px-6 rounded-lg transition duration-300">Send
+                                class="w-full bg-brand-red hover:bg-brand-red-dark text-white font-bold py-3 px-6 rounded-lg transition duration-300">Send
                                 Message</button>
+                            <div id="contactSuccess" class="hidden bg-brand-red-light text-brand-red p-4 rounded-lg text-center font-medium">
+                                Thank you for your message. Our team will get back to you shortly.
+                            </div>
                         </form>
                     </div>
                 </div>
@@ -947,19 +1004,19 @@
                         high-quality projects in various sectors.</p>
                     <div class="flex space-x-4 mt-6">
                         <a href="#"
-                            class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-red-600 transition duration-300">
+                            class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-brand-red transition duration-300">
                             <i class="fab fa-facebook-f"></i>
                         </a>
                         <a href="#"
-                            class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-red-600 transition duration-300">
+                            class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-brand-red transition duration-300">
                             <i class="fab fa-twitter"></i>
                         </a>
                         <a href="#"
-                            class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-red-600 transition duration-300">
+                            class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-brand-red transition duration-300">
                             <i class="fab fa-linkedin-in"></i>
                         </a>
                         <a href="#"
-                            class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-red-600 transition duration-300">
+                            class="w-10 h-10 bg-gray-800 rounded-full flex items-center justify-center hover:bg-brand-red transition duration-300">
                             <i class="fab fa-instagram"></i>
                         </a>
                     </div>
@@ -968,18 +1025,18 @@
                 <div class="md:w-1/3 mb-8 md:mb-0">
                     <h3 class="text-xl font-bold mb-4">Quick Links</h3>
                     <ul class="space-y-2">
-                        <li><a href="#home" class="text-gray-400 hover:text-red-500 transition duration-300">Home</a>
+                        <li><a href="#home" class="text-gray-400 hover:text-brand-red transition duration-300">Home</a>
                         </li>
-                        <li><a href="#about" class="text-gray-400 hover:text-red-500 transition duration-300">About
+                        <li><a href="#about" class="text-gray-400 hover:text-brand-red transition duration-300">About
                                 Us</a></li>
                         <li><a href="#services"
-                                class="text-gray-400 hover:text-red-500 transition duration-300">Services</a></li>
-                        <li><a href="#values" class="text-gray-400 hover:text-red-500 transition duration-300">Our
+                                class="text-gray-400 hover:text-brand-red transition duration-300">Services</a></li>
+                        <li><a href="#values" class="text-gray-400 hover:text-brand-red transition duration-300">Our
                                 Values</a></li>
-                        <li><a href="#team" class="text-gray-400 hover:text-red-500 transition duration-300">Our
+                        <li><a href="#team" class="text-gray-400 hover:text-brand-red transition duration-300">Our
                                 Team</a></li>
                         <li><a href="#contact"
-                                class="text-gray-400 hover:text-red-500 transition duration-300">Contact</a></li>
+                                class="text-gray-400 hover:text-brand-red transition duration-300">Contact</a></li>
                     </ul>
                 </div>
 
@@ -1020,7 +1077,7 @@
                                    
                             </li>
                             <li class="flex items-start">
-                                <i class="fas fa-phone text-brand-red-500 mr-2 mt-1"></i>
+                                <i class="fas fa-phone text-brand-gold mr-2 mt-1"></i>
                                 <span class="text-gray-400">+2349034112394</span>
                                 
                                    
@@ -1036,14 +1093,14 @@
             </div>
 
             <div class="border-t border-gray-800 mt-12 pt-8 text-center text-gray-400">
-                <p>&copy; 2025 PA-ETOS LIMITED. All Rights Reserved.</p>
+                <p>&copy; <span id="year">2026</span> PA-ETOS LIMITED. All Rights Reserved.</p>
             </div>
         </div>
     </footer>
 
     <!-- Back to Top Button -->
     <button id="back-to-top"
-        class="fixed bottom-8 right-8 w-12 h-12 bg-red-600 text-white rounded-full shadow-lg hidden items-center justify-center">
+        class="fixed bottom-8 right-8 w-12 h-12 bg-brand-red text-white rounded-full shadow-lg hidden items-center justify-center">
         <i class="fas fa-arrow-up"></i>
     </button>
 
@@ -1181,7 +1238,81 @@
 
         // Initialize first slide
         showSlide(0);
+
+        // Service "Learn More" modal
+        const serviceDetails = {
+            electrical: {
+                title: 'Electrical Engineering',
+                body: '<p class="text-gray-600 mb-4">We design, install, and maintain reliable electrical systems for buildings, infrastructure, and communities.</p>' +
+                      '<ul class="list-disc list-inside text-gray-700 space-y-2 mb-4">' +
+                      '<li>Power distribution and transmission</li>' +
+                      '<li>Electrical system design and installation</li>' +
+                      '<li>Electrification of buildings and infrastructure</li>' +
+                      '<li>Solar energy and backup power solutions</li>' +
+                      '</ul>' +
+                      '<p class="text-gray-600">From single-phase wiring to full substation works, we deliver safe, code-compliant installations backed by experienced engineers.</p>'
+            },
+            civil: {
+                title: 'Civil Engineering',
+                body: '<p class="text-gray-600 mb-4">We build durable roads, bridges, and public infrastructure that stand the test of time.</p>' +
+                      '<ul class="list-disc list-inside text-gray-700 space-y-2 mb-4">' +
+                      '<li>Road construction and maintenance</li>' +
+                      '<li>Bridge construction and rehabilitation</li>' +
+                      '<li>Drainage and earthworks</li>' +
+                      '<li>Infrastructure development</li>' +
+                      '</ul>' +
+                      '<p class="text-gray-600">With a proven track record on highways, barracks, and institutional projects, we manage every stage from survey to handover.</p>'
+            },
+            building: {
+                title: 'Building Engineering',
+                body: '<p class="text-gray-600 mb-4">We deliver residential, commercial, and institutional buildings with modern, sustainable design.</p>' +
+                      '<ul class="list-disc list-inside text-gray-700 space-y-2 mb-4">' +
+                      '<li>Residential, commercial, and industrial building construction</li>' +
+                      '<li>Building renovation and refurbishment</li>' +
+                      '<li>Project management and supervision</li>' +
+                      '</ul>' +
+                      '<p class="text-gray-600">Our team manages quality, cost, and schedule so your project is completed on time and to specification.</p>'
+            }
+        };
+
+        document.querySelectorAll('.service-details-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const s = serviceDetails[btn.dataset.service];
+                if (!s) return;
+                document.getElementById('modal-title').textContent = s.title;
+                document.getElementById('modal-content').innerHTML = s.body;
+                document.getElementById('service-modal').classList.remove('hidden');
+            });
+        });
+
+        document.getElementById('close-modal').addEventListener('click', () => {
+            document.getElementById('service-modal').classList.add('hidden');
+        });
+
+        document.getElementById('service-modal').addEventListener('click', (e) => {
+            if (e.target === e.currentTarget) {
+                document.getElementById('service-modal').classList.add('hidden');
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                document.getElementById('service-modal').classList.add('hidden');
+            }
+        });
+
+        // Contact form (client-side; wire to a backend/email service when ready)
+        document.getElementById('contactForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            document.getElementById('contactSuccess').classList.remove('hidden');
+            e.target.querySelectorAll('input, textarea').forEach((el) => { el.value = ''; });
+        });
+
+        // Auto-update copyright year
+        document.getElementById('year').textContent = new Date().getFullYear();
     </script>
+
+    <script src="js/site.js"></script>
 </body>
 
 </html>
