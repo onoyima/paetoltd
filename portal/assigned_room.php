@@ -5,8 +5,8 @@ require_once __DIR__ . '/php/rbac.php';
 pt_require_page('assign_room');
 
 include 'php/fetch_admin_info.php';
-
-include 'php/academic_helper.php';
+require_once __DIR__ . '/php/academic_helper.php';
+$hostels = pt_all_hostels();
 
 $pageTitle = 'Assigned Rooms';
 $pageHeader = 'Dashboard';
@@ -98,6 +98,7 @@ $pageHeader = 'Dashboard';
 										<th>Level</th>
 										<th>Student Number</th>
 										<th>Room Bunk</th>
+										<th>Hostel</th>
 										<th>Action</th>
 									</tr>
 								</thead>
@@ -124,7 +125,7 @@ $pageHeader = 'Dashboard';
 										</div>
 										<div class="form-group">
 											<label for="hostelSelector">Hostel</label>
-											<select id="hostelSelector" class="default-select form-control">
+											<select id="hostelSelector" name="hostel_id" class="default-select form-control" required>
 												<option value="0">All Hostels</option>
 												<?php 
 												$hostels = pt_all_hostels(); 
@@ -134,8 +135,21 @@ $pageHeader = 'Dashboard';
 												<?php endforeach; ?>
 											</select>
 										</div>
+										<div class="form-group">
+											<label for="sessionSelector">Academic Session</label>
+											<select id="sessionSelector" name="session_id" class="default-select form-control" required>
+												<?php 
+												$sessions = pt_all_sessions(); 
+												foreach ($sessions as $s): 
+												?>
+												<option value="<?php echo (int)$s['id']; ?>" <?php echo !empty($s['is_active']) ? 'selected' : ''; ?>>
+													<?php echo htmlspecialchars($s['name']); ?><?php echo !empty($s['is_active']) ? ' (Active)' : ''; ?>
+												</option>
+												<?php endforeach; ?>
+											</select>
+										</div>
 										<div class="alert alert-info">
-											<p>CSV file should have the following columns:</p>
+											<p>CSV file should have the following columns (8 columns total):</p>
 											<ol>
 												<li>Student Name</li>
 												<li>Matric No</li>
@@ -143,7 +157,8 @@ $pageHeader = 'Dashboard';
 												<li>Parent Number</li>
 												<li>Level</li>
 												<li>Student Number</li>
-												
+												<li>Room Bunk</li>
+												<li>Bed Space (e.g., A1, B2, C1)</li>
 											</ol>
 											<p>Room Bunk is used as the unique identifier and cannot be changed.</p>
 											 <!-- <button type="button" class="btn btn-primary" id="submitCSV">Upload</button> -->
@@ -220,6 +235,13 @@ function esc(s) {
     });
 }
 
+// Hostel id -> name map for table display
+var hostelMap = {};
+<?php foreach ($hostels as $h): ?>
+    hostelMap[<?php echo (int)$h['id']; ?>] = <?php echo json_encode($h['name']); ?>;
+<?php endforeach; ?>
+
+
 // Execute immediately (PTNav runs scripts after AJAX swap)
 var tableWrap = $('#userTable').closest('.pt-table-wrap')[0];
 PT.tableLoading(tableWrap, true);
@@ -241,14 +263,15 @@ function getAssignHostelUrl(baseUrl) {
     return baseUrl + '?hostel_id=' + currentHostelId;
 }
 
-// Fetch assigned rooms with hostel filtering
+// Fetch assigned rooms with hostel + session filtering
 function fetchAssignedRooms() {
-    console.log('Fetching data from fetch_assigned_room.php with hostel_id=' + currentHostelId);
+    var sessionId = $('#sessionSelector').length ? parseInt($('#sessionSelector').val()) : 0;
+    console.log('Fetching data from fetch_assigned_room.php with hostel_id=' + currentHostelId + ', session_id=' + sessionId);
     $.ajax({
         url: 'php/fetch_assigned_room.php',
         type: 'GET',
         dataType: 'json',
-        data: { hostel_id: currentHostelId },
+        data: { hostel_id: currentHostelId, session_id: sessionId },
         success: function(data) {
             console.log('AJAX success: status = ' + data.status + ', users length = ' + (data.users ? data.users.length : 0));
             PT.tableLoading(tableWrap, false);
@@ -270,6 +293,7 @@ function fetchAssignedRooms() {
                                 <td>${esc(user.level)}</td>
                                 <td>${esc(user.student_number)}</td>
                                 <td>${esc(user.room_bunk)}</td>
+                                <td>${esc(hostelMap[user.hostel_id] || '')}</td>
                                 <td>
                                     <button class="btn btn-primary btn-sm update-btn" data-id="${esc(user.sn)}" 
                                     data-student-name="${esc(user.student_name)}" 
@@ -290,18 +314,18 @@ function fetchAssignedRooms() {
                         console.log('Displayed ' + users.length + ' assigned rooms');
                     }
                 } else {
-                    tableBody.append('<tr><td colspan="9" class="text-center">No assigned rooms found</td></tr>');
+                    tableBody.append('<tr><td colspan="10" class="text-center">No assigned rooms found</td></tr>');
                 }
             } else {
                 console.error('Error:', data.message);
-                $('#userTable tbody').html('<tr><td colspan="9" class="text-center">Error: ' + esc(data.message) + '</td></tr>');
+                $('#userTable tbody').html('<tr><td colspan="10" class="text-center">Error: ' + esc(data.message) + '</td></tr>');
             }
         }
     error: function(xhr, status, error) {
         console.error('AJAX Error:', status, error);
         console.log('Response Text:', xhr.responseText);
         PT.tableLoading(tableWrap, false);
-        $('#userTable tbody').html('<tr><td colspan="9" class="text-center">Error loading data. Please try again.</td></tr>');
+        $('#userTable tbody').html('<tr><td colspan="10" class="text-center">Error loading data. Please try again.</td></tr>');
     }
 });
 };
@@ -393,11 +417,20 @@ $(document).on('click', '.revoke-btn', function() {
         });
     });
     
-    // Handle CSV upload button click
-    $(document).on('click', '#uploadCSVBtn', function() {
-        var csvModal = new bootstrap.Modal(document.getElementById('csvUploadModal'));
-        csvModal.show();
-    });
+// Handle CSV upload button click
+$(document).on('click', '#uploadCSVBtn', function() {
+    // Default the upload hostel selector to the currently selected tab
+    if (currentHostelId > 0) {
+        $('#hostelSelector').val(String(currentHostelId));
+    }
+    var csvModal = new bootstrap.Modal(document.getElementById('csvUploadModal'));
+    csvModal.show();
+});
+
+// Re-fetch when the session selector changes
+$(document).on('change', '#sessionSelector', function() {
+    fetchAssignedRooms();
+});
     
     // Handle CSV submit button click
     $(document).on('click', '#submitCSV', function() {
@@ -447,9 +480,7 @@ function downloadCSV() {
         // Loop until the second-to-last column
         for (var j = 0; j < cols.length - 1; j++) {
             row.push(cols[j].innerText);
-        }
-
-        csv.push(row.join(","));
+        }        csv.push(row.join(","));
     }
 
     // Create a CSV Blob
@@ -473,30 +504,17 @@ function downloadCSV() {
 }
 
 	function downloadCSVTemplate() {
-    var csv = [];
-    var rows = document.querySelectorAll("#userTable tr");
-
-    for (var i = 0; i < rows.length; i++) {
-        var row = [], cols = rows[i].querySelectorAll("td, th");
-
-        // Skip first and last column
-        for (var j = 1; j < cols.length - 1; j++) {
-            row.push(cols[j].innerText);
-        }
-
-        csv.push(row.join(","));
-    }
-
-    // Create a CSV Blob
-    var csvFile = new Blob([csv.join("\n")], { type: "text/csv" });
+    var hostelId = currentHostelId || 0;
+    var url = 'download_csv_template.php?hostel_id=' + hostelId;
+    
+    // Create a temporary link and trigger download
     var downloadLink = document.createElement("a");
-
-    downloadLink.download = "students_data.csv";
-    downloadLink.href = window.URL.createObjectURL(csvFile);
+    downloadLink.href = url;
+    downloadLink.download = 'room_assignment_template_hostel_' + hostelId + '.csv';
     downloadLink.style.display = "none";
-
     document.body.appendChild(downloadLink);
     downloadLink.click();
+    document.body.removeChild(downloadLink);
 }
 
 
@@ -517,7 +535,7 @@ function downloadFilteredExcel() {
     
     // Get table headers
     $('#userTable thead tr th').each(function(index) {
-        if (index < 8) { // Exclude the Action column
+        if (index < 9) { // Exclude the Action column
             headers.push($(this).text().trim());
         }
     });
@@ -526,7 +544,7 @@ function downloadFilteredExcel() {
     $('#userTable tbody tr:visible').each(function() {
         var rowData = [];
         $(this).find('td').each(function(index) {
-            if (index < 8) { // Exclude the Action column
+            if (index < 9) { // Exclude the Action column
                 rowData.push($(this).text().trim());
             }
         });

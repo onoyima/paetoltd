@@ -2,6 +2,7 @@
 include 'auth_admin.php'; // Admin-only gate
 header('Content-Type: application/json');
 include 'config.php'; // Database connection
+require_once __DIR__ . '/academic_helper.php';
 
 // Enable error reporting for debugging
 
@@ -21,9 +22,22 @@ try {
         exit;
     }
     
-    // Query to fetch assigned rooms and student details
+    // Hostel filter (0 = all hostels)
+    $hostelId = isset($_GET['hostel_id']) ? intval($_GET['hostel_id']) : 0;
+    
+    // Session filter (defaults to the active academic session)
+    $sessionId = isset($_GET['session_id']) ? intval($_GET['session_id']) : pt_active_session_id();
+    if ($sessionId <= 0) {
+        $response['message'] = 'No active academic session';
+        echo json_encode($response);
+        exit;
+    }
+    
+    // Query to fetch assigned rooms and student details for the session,
+    // optionally filtered by hostel
     $sql = "SELECT 
                 `sn`,
+                `hostel_id`,
                 `student_name`,
                 `matric_no`,
                 `department`,
@@ -31,9 +45,20 @@ try {
                 `level`,
                 `student_number`,
                 `room_bunk` 
-            FROM `assign_room`";
+            FROM `assign_room`
+            WHERE `session_id` = ?";
+    $params = [$sessionId];
+    $types = 'i';
+    if ($hostelId > 0) {
+        $sql .= " AND `hostel_id` = ?";
+        $params[] = $hostelId;
+        $types .= 'i';
+    }
 
-    $result = $conn->query($sql);
+    $stmt = $conn->prepare($sql);
+    $stmt->bind_param($types, ...$params);
+    $stmt->execute();
+    $result = $stmt->get_result();
 
     if (!$result) {
         throw new Exception("Database query failed: " . $conn->error);
@@ -43,6 +68,7 @@ try {
     while ($row = $result->fetch_assoc()) {
         $users[] = [
             'sn' => $row['sn'],
+            'hostel_id' => (int)$row['hostel_id'],
             'student_name' => $row['student_name'],
             'matric_no' => $row['matric_no'],
             'department' => $row['department'],
@@ -52,25 +78,17 @@ try {
             'room_bunk' => $row['room_bunk']
         ];
     }
+    $stmt->close();
 
     $response['status'] = 'success';
     $response['message'] = 'Data fetched successfully';
     $response['users'] = $users;
+    $response['session_id'] = $sessionId;
+    $response['hostel_id'] = $hostelId;
 
 } catch (Exception $e) {
     $response['status'] = 'error';
     $response['message'] = $e->getMessage();
-}
-
-// Set success status if we got this far
-if (isset($users) && count($users) > 0) {
-    $response['status'] = 'success';
-    $response['message'] = 'Data fetched successfully';
-    $response['users'] = $users;
-} else {
-    $response['status'] = 'success';
-    $response['message'] = 'No assigned rooms found';
-    $response['users'] = [];
 }
 
 // Ensure we're sending valid JSON

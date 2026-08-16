@@ -28,12 +28,14 @@ if ($result->num_rows == 1) {
 $stmt->close();
 
 $assignment = null;
+$display_hostel_name = '';
 if ($sessionId > 0) {
 	$stmt = $conn->prepare(
-		"SELECT r.room_id, r.bed_space, r.room_category, rm.room_number, rm.full_capacity, rc.room_type, rc.rate, r.session_id
+		"SELECT r.room_id, r.bed_space, r.room_category, r.room_bunk, r.hostel_id, rm.room_number, rm.full_capacity, rc.room_type, rc.rate, r.session_id, h.name AS hostel_name
 		 FROM reservations r
 		 LEFT JOIN room rm ON r.room_id = rm.id
 		 LEFT JOIN room_category rc ON rm.category_id = rc.id
+		 LEFT JOIN hostel h ON r.hostel_id = h.id
 		 WHERE r.user_id = ? AND r.session_id = ?
 		 ORDER BY r.id DESC LIMIT 1"
 	);
@@ -45,6 +47,33 @@ if ($sessionId > 0) {
 	}
 	$stmt->close();
 }
+
+// Fallback: a student may have been pre-assigned via CSV (assign_room) before
+// registering on the portal. If no reservation row exists yet, surface the
+// roster assignment directly so the room is still visible.
+if (!$assignment && $sessionId > 0 && !empty($students_info['regNo'])) {
+	$stmt = $conn->prepare(
+		"SELECT NULL AS room_id, bed_space, NULL AS room_category, room_bunk, hostel_id, NULL AS room_number, NULL AS full_capacity, NULL AS room_type, NULL AS rate, session_id, h.name AS hostel_name
+		 FROM assign_room a
+		 LEFT JOIN hostel h ON a.hostel_id = h.id
+		 WHERE matric_no = ? AND session_id = ?
+		 LIMIT 1"
+	);
+	$stmt->bind_param('si', $students_info['regNo'], $sessionId);
+	$stmt->execute();
+	$result = $stmt->get_result();
+	if ($result->num_rows > 0) {
+		$assignment = $result->fetch_assoc();
+	}
+	$stmt->close();
+}
+
+// CSV-assigned students have no room_id link; the room_bunk string is the assignment.
+$display_room_number = $assignment ? trim((string)($assignment['room_number'] ?? '')) : '';
+if ($assignment && $display_room_number === '') {
+	$display_room_number = trim((string)($assignment['room_bunk'] ?? ''));
+}
+$display_hostel_name = $assignment ? trim((string)($assignment['hostel_name'] ?? '')) : '';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -247,24 +276,34 @@ if ($sessionId > 0) {
 								<h4 class="card-title">Room Allocation</h4>
 							</div>
 							<div class="card-body">
-								<?php if ($assignment) : ?>
+									<?php if ($assignment) : ?>
 									<div class="row">
 										<div class="col-sm-6 m-b30">
 											<label class="form-label">Room Number</label>
-											<input type="text" class="form-control" value="<?php echo htmlspecialchars($assignment['room_number']); ?>" readonly>
+											<input type="text" class="form-control" value="<?php echo htmlspecialchars($display_room_number); ?>" readonly>
 										</div>
+										<?php if ($display_hostel_name !== '') : ?>
+										<div class="col-sm-6 m-b30">
+											<label class="form-label">Hostel</label>
+											<input type="text" class="form-control" value="<?php echo htmlspecialchars($display_hostel_name); ?>" readonly>
+										</div>
+										<?php endif; ?>
+										<?php if (!empty($assignment['room_type'])) : ?>
 										<div class="col-sm-6 m-b30">
 											<label class="form-label">Room Type</label>
-											<input type="text" class="form-control" value="<?php echo htmlspecialchars($assignment['room_type'] ?? $assignment['room_category']); ?>" readonly>
+											<input type="text" class="form-control" value="<?php echo htmlspecialchars($assignment['room_type']); ?>" readonly>
 										</div>
+										<?php endif; ?>
 										<div class="col-sm-6 m-b30">
 											<label class="form-label">Bed Space</label>
 											<input type="text" class="form-control" value="<?php echo htmlspecialchars($assignment['bed_space']); ?>" readonly>
 										</div>
+										<?php if (!empty($assignment['full_capacity'])) : ?>
 										<div class="col-sm-6 m-b30">
 											<label class="form-label">Room Capacity</label>
 											<input type="text" class="form-control" value="<?php echo htmlspecialchars($assignment['full_capacity']); ?>" readonly>
 										</div>
+										<?php endif; ?>
 										<?php if (!empty($assignment['rate'])) : ?>
 											<div class="col-sm-6 m-b30">
 												<label class="form-label">Rate (NGN)</label>

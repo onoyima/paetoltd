@@ -21,17 +21,38 @@ try {
         throw new Exception('Only CSV files are allowed.');
     }
 
-    // Get active session
-    $sessionId = pt_active_session_id();
-    if (!$sessionId) {
-        throw new Exception('No active academic session. Cannot import assignments.');
+    // Get session (defaults to active academic session)
+    $sessionId = isset($_POST['session_id']) ? intval($_POST['session_id']) : pt_active_session_id();
+    if ($sessionId <= 0) {
+        throw new Exception('No academic session selected. Please choose a session.');
     }
+    $sessionCheck = $conn->prepare("SELECT id FROM academic_session WHERE id = ?");
+    $sessionCheck->bind_param('i', $sessionId);
+    $sessionCheck->execute();
+    $sessionCheck->store_result();
+    if ($sessionCheck->num_rows === 0) {
+        $sessionCheck->close();
+        throw new Exception('Selected academic session does not exist.');
+    }
+    $sessionCheck->close();
 
-    // Get hostel_id from POST data (default to 1)
-    $hostelId = isset($_POST['hostel_id']) ? intval($_POST['hostel_id']) : 1;
+    // Get hostel_id from POST data (must be a real hostel, not 0/"All")
+    $hostelId = isset($_POST['hostel_id']) ? intval($_POST['hostel_id']) : 0;
+    if ($hostelId <= 0) {
+        throw new Exception('Please select a hostel to import the assignment for.');
+    }
+    $hostelCheck = $conn->prepare("SELECT id FROM hostel WHERE id = ?");
+    $hostelCheck->bind_param('i', $hostelId);
+    $hostelCheck->execute();
+    $hostelCheck->store_result();
+    if ($hostelCheck->num_rows === 0) {
+        $hostelCheck->close();
+        throw new Exception('Selected hostel does not exist.');
+    }
+    $hostelCheck->close();
 
     $csvFile = fopen($file['tmp_name'], 'r');
-    fgetcsv($csvFile); // skip header
+    $header = fgetcsv($csvFile); // skip header
 
     $importCount = 0;
     $errorCount = 0;
@@ -40,9 +61,9 @@ try {
     $conn->begin_transaction();
 
     while (($row = fgetcsv($csvFile)) !== FALSE) {
-        if (count($row) < 7) {
+        if (count($row) < 8) {
             $errorCount++;
-            $errors[] = "Row skipped: Not enough columns (expected 7)";
+            $errors[] = "Row skipped: Not enough columns (expected 8: student_name, matric_no, department, parent_number, level, student_number, room_bunk, bed_space)";
             continue;
         }
 
@@ -53,6 +74,13 @@ try {
         $level = trim($row[4]);
         $student_number = trim($row[5]);
         $room_bunk = trim($row[6]);
+        $bed_space = trim($row[7]);
+
+        // Derive the bed space from the room_bunk tail when the CSV doesn't
+        // provide one (e.g. "ROOM 323-2U" -> "Bunk 2 Up").
+        if ($bed_space === '' && $room_bunk !== '') {
+            $bed_space = pt_derive_bed_space($room_bunk);
+        }
 
         if (!$room_bunk) {
             $errorCount++;
@@ -60,71 +88,86 @@ try {
             continue;
         }
 
-        // Verify room exists in this hostel
-        $roomStmt = $conn->prepare("SELECT id, category_id FROM room WHERE room_number = ? AND hostel_id = ?");
-        $roomStmt->bind_param("si", $room_bunk, $hostelId);
-        $roomStmt->execute();
-        $roomResult = $roomStmt->get_result();
-        
-        if (!$roomResult || $roomResult->num_rows === 0) {
+        if (!$matric_no) {
             $errorCount++;
-            $errors[] = "Room '$room_bunk' not found in selected hostel";
-            $roomStmt->close();
+            $errors[] = "Row skipped: Matric number is required";
             continue;
         }
-        $room = $roomResult->fetch_assoc();
-        $roomStmt->close();
 
-        // Check if assign_room record exists for this room_bunk in active session AND hostel
-        $checkStmt = $conn->prepare("SELECT sn FROM assign_room WHERE room_bunk = ? AND session_id = ?");
-        $checkStmt->bind_param("si", $room_bunk, $sessionId);
-        $checkStmt->execute();
-        $result = $checkStmt->get_result();
+        // Note: CSV assignments are roster-based (from assign_room).
+        // No room lookup / auto-creation here — the reservation stores the
+        // room_bunk string directly. Portal-based assignments (assign_room.php)
+        // are the only path that links a reservation to a real room record.
 
-        if ($result->num_rows > 0) {
-            // Update existing
-            $updateStmt = $conn->prepare("UPDATE assign_room SET 
-                student_name = ?, matric_no = ?, department = ?, parent_number = ?, level = ?, student_number = ? 
-                WHERE room_bunk = ? AND session_id = ?");
-            $updateStmt->bind_param("sssssssi", $student_name, $matric_no, $department, $parent_number, $level, $student_number, $room_bunk, $sessionId);
-            
-            if ($updateStmt->execute()) {
-                $importCount++;
-            } else {
-                $errorCount++;
-                $errors[] = "Error updating $room_bunk: " . $updateStmt->error;
-            }
-            $updateStmt->close();
-        } else {
-            // Insert new assign_room record
-            $insertStmt = $conn->prepare("INSERT INTO assign_room 
-                (student_name, matric_no, department, parent_number, level, student_number, room_bunk, session_id) 
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-            $insertStmt->bind_param("sssssssi", $student_name, $matric_no, $department, $parent_number, $level, $student_number, $room_bunk, $sessionId);
-            
-            if ($insertStmt->execute()) {
-                $importCount++;
-                
-                // Create reservation
-                $userStmt = $conn->prepare("SELECT id FROM userregistration WHERE regNo = ?");
-                $userStmt->bind_param("s", $matric_no);
-                $userStmt->execute();
-                $userResult = $userStmt->get_result();
-                if ($userResult && $userResult->num_rows > 0) {
-                    $user = $userResult->fetch_assoc();
-                    $resStmt = $conn->prepare("INSERT INTO reservations (user_id, room_id, room_category, session_id, bed_space) VALUES (?, ?, ?, ?, 1)");
-                    $resStmt->bind_param("iiii", $user['id'], $room['id'], $room['category_id'], $sessionId);
-                    $resStmt->execute();
-                    $resStmt->close();
-                }
-                $userStmt->close();
-            } else {
-                $errorCount++;
-                $errors[] = "Error inserting $room_bunk: " . $insertStmt->error;
-            }
-            $insertStmt->close();
+        // Upsert assign_room record (insert or update on duplicate matric_no+session_id or room_bunk+session_id)
+        // Get next sn value
+        $snStmt = $conn->prepare("SELECT COALESCE(MAX(sn), 0) + 1 FROM assign_room");
+        $snStmt->execute();
+        $snResult = $snStmt->get_result();
+        $nextSn = $snResult->fetch_row()[0];
+        $snStmt->close();
+
+        $upsertStmt = $conn->prepare("
+            INSERT INTO assign_room 
+                (sn, hostel_id, student_name, matric_no, department, parent_number, level, student_number, room_bunk, bed_space, session_id, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+            ON DUPLICATE KEY UPDATE
+                hostel_id = VALUES(hostel_id),
+                student_name = VALUES(student_name),
+                department = VALUES(department),
+                parent_number = VALUES(parent_number),
+                level = VALUES(level),
+                student_number = VALUES(student_number),
+                bed_space = VALUES(bed_space),
+                updated_at = NOW()
+        ");
+        $upsertStmt->bind_param("iissssssssi", $nextSn, $hostelId, $student_name, $matric_no, $department, $parent_number, $level, $student_number, $room_bunk, $bed_space, $sessionId);
+        
+        if (!$upsertStmt->execute()) {
+            $errorCount++;
+            $errors[] = "Error upserting assign_room for $matric_no: " . $upsertStmt->error;
+            $upsertStmt->close();
+            continue;
         }
-        $checkStmt->close();
+        $assign_room_id = $upsertStmt->insert_id;
+        $upsertStmt->close();
+
+        // Find user by matric_no
+        $userStmt = $conn->prepare("SELECT id FROM userregistration WHERE regNo = ?");
+        $userStmt->bind_param("s", $matric_no);
+        $userStmt->execute();
+        $userResult = $userStmt->get_result();
+        
+        if ($userResult && $userResult->num_rows > 0) {
+            $user = $userResult->fetch_assoc();
+            
+            // Upsert reservation (insert or update on duplicate user_id+session_id).
+            // CSV-assigned students get room_bunk stored directly (no room_id link).
+            // If a reservation already exists from a portal assignment (room_id set),
+            // the room_bunk is still recorded but the room link is preserved.
+            $resStmt = $conn->prepare("
+                INSERT INTO reservations (user_id, session_id, hostel_id, room_bunk, bed_space, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, NOW(), NOW())
+                ON DUPLICATE KEY UPDATE
+                    hostel_id = VALUES(hostel_id),
+                    room_bunk = VALUES(room_bunk),
+                    bed_space = VALUES(bed_space),
+                    updated_at = NOW()
+            ");
+            $resStmt->bind_param("iiiss", $user['id'], $sessionId, $hostelId, $room_bunk, $bed_space);
+            
+            if (!$resStmt->execute()) {
+                $errorCount++;
+                $errors[] = "Error upserting reservation for $matric_no: " . $resStmt->error;
+            } else {
+                $importCount++;
+            }
+            $resStmt->close();
+        } else {
+            // Student not registered yet - still count assign_room as imported
+            $importCount++;
+        }
+        $userStmt->close();
     }
 
     fclose($csvFile);

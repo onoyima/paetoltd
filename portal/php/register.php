@@ -1,5 +1,6 @@
 <?php
 include 'config.php';
+require_once __DIR__ . '/academic_helper.php';
 
 $response = array();
 
@@ -67,6 +68,32 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     $stmt->bind_param('sssssssssssssss', $regNo, $firstName, $middleName, $lastName, $gender, $department, $level, $contactNo, $parentPhone, $email, $hashedPassword, $userImage, $regDate, $secretQuestion, $secretAnswer);
 
                     if ($stmt->execute()) {
+                        $newUserId = $conn->insert_id;
+
+                        // Backfill: if this matric number was pre-assigned via CSV
+                        // (assign_room) for the active session, create the reservation
+                        // so the student sees their room even though they registered later.
+                        $sessionId = pt_active_session_id();
+                        if ($sessionId > 0) {
+                            $arStmt = $conn->prepare("SELECT room_bunk, bed_space, hostel_id FROM assign_room WHERE matric_no = ? AND session_id = ? LIMIT 1");
+                            $arStmt->bind_param('si', $regNo, $sessionId);
+                            $arStmt->execute();
+                            $arResult = $arStmt->get_result();
+                            if ($arResult && $arResult->num_rows > 0) {
+                                $arRow = $arResult->fetch_assoc();
+                                // Derive the bed space from the room_bunk tail when the
+                                // roster has none (e.g. "ROOM 323-2U" -> "Bunk 2 Up").
+                                if (empty($arRow['bed_space'])) {
+                                    $arRow['bed_space'] = pt_derive_bed_space($arRow['room_bunk'] ?? '');
+                                }
+                                $resStmt = $conn->prepare("INSERT INTO reservations (user_id, session_id, hostel_id, room_bunk, bed_space, created_at, updated_at) VALUES (?, ?, ?, ?, ?, NOW(), NOW()) ON DUPLICATE KEY UPDATE hostel_id = VALUES(hostel_id), room_bunk = VALUES(room_bunk), bed_space = VALUES(bed_space), updated_at = NOW()");
+                                $resStmt->bind_param('iiiss', $newUserId, $sessionId, $arRow['hostel_id'], $arRow['room_bunk'], $arRow['bed_space']);
+                                $resStmt->execute();
+                                $resStmt->close();
+                            }
+                            $arStmt->close();
+                        }
+
                         $response['success'] = "Signup successful! You can now <a href='index.html'>login</a>.";
                     } else {
                         $response['error'] = "Error: " . $stmt->error;

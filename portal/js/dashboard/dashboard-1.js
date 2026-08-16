@@ -1000,11 +1000,17 @@
 
 	
 		
-	jQuery(window).on('load',function(){
+jQuery(window).on('load',function(){
 		setTimeout(function(){
 			dlabChartlist.load();
 		}, 1000); 
-		
+	});
+
+	/* PTNav AJAX: reinitialize charts when content swaps */
+	jQuery(window).on('pt:content-loaded', function(){
+		setTimeout(function(){
+			dlabChartlist.load();
+		}, 100); 
 	});
 
      

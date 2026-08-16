@@ -32,7 +32,7 @@ if (isset($data['userId'], $data['roomCategory'], $data['roomNumber'], $data['be
     }
 
     // Verify the selected room exists and belongs to the chosen category
-    $roomCheck = $conn->prepare("SELECT id FROM room WHERE id = ? AND category_id = ?");
+    $roomCheck = $conn->prepare("SELECT id, hostel_id FROM room WHERE id = ? AND category_id = ?");
     $roomCheck->bind_param('ii', $roomNumber, $roomCategory);
     $roomCheck->execute();
     $roomCheck->store_result();
@@ -42,6 +42,8 @@ if (isset($data['userId'], $data['roomCategory'], $data['roomNumber'], $data['be
         echo json_encode(['status' => 'error', 'message' => 'Invalid room selection']);
         exit;
     }
+    $roomCheck->bind_result($roomId, $hostelId);
+    $roomCheck->fetch();
     $roomCheck->close();
 
     // Remove any existing reservation for this user in this session before assigning a new one
@@ -51,8 +53,8 @@ if (isset($data['userId'], $data['roomCategory'], $data['roomNumber'], $data['be
     $del->close();
 
     // Store the room assignment
-    $stmt = $conn->prepare("INSERT INTO reservations (user_id, session_id, room_category, room_id, bed_space) VALUES (?, ?, ?, ?, ?)");
-    $stmt->bind_param('iiiis', $userId, $sessionId, $roomCategory, $roomNumber, $bedSpace);
+    $stmt = $conn->prepare("INSERT INTO reservations (user_id, session_id, hostel_id, room_category, room_id, bed_space) VALUES (?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param('iiiiis', $userId, $sessionId, $hostelId, $roomCategory, $roomNumber, $bedSpace);
 
     if ($stmt->execute()) {
         // Mark the payment as assigned so the student dashboard reflects it

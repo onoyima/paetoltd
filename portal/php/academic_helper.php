@@ -101,3 +101,33 @@ if (!function_exists('pt_all_sessions')) {
         return $list;
     }
 }
+
+if (!function_exists('pt_derive_bed_space')) {
+    // Derives a human-readable bed space from a room_bunk string.
+    // The last 2 characters encode the bunk + position, e.g. "ROOM 323-2U"
+    // -> "Bunk 2 Up", "ROOM 323-1D" -> "Bunk 1 Down" (U/D map to Up/Down).
+    // Any other trailing pair (e.g. "B1") is kept verbatim as the bunk label.
+    function pt_derive_bed_space($room_bunk) {
+        $bunk = trim((string)$room_bunk);
+        if ($bunk === '') {
+            return '';
+        }
+        $tail = substr($bunk, -2);
+        if (strlen($tail) !== 2) {
+            return '';
+        }
+        $bunkNo = $tail[0];
+        $position = strtoupper($tail[1]);
+        if ($position === 'U') {
+            return "Bunk $bunkNo Up";
+        }
+        if ($position === 'D') {
+            return "Bunk $bunkNo Down";
+        }
+        // "B2"/"B4" style labels: the B stands for Bunk.
+        if ($bunkNo === 'B' && ctype_digit($position)) {
+            return "Bunk $position";
+        }
+        return $tail;
+    }
+}
