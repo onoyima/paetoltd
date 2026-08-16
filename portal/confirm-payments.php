@@ -96,7 +96,8 @@ $pageHeader = 'Dashboard';
 										<td><?= htmlspecialchars($row["hostel_name"] ?? '—') ?></td>
 										<td>
 											<button class="btn btn-success view-payment"
-												data-userid="<?= $row['id'] ?>">Assign</button>
+												data-userid="<?= $row['id'] ?>"
+												data-paymentid="<?= (int)$row['payment_id'] ?>">Assign</button>
 										</td>
 										<td>
 											<button class="btn btn-danger">Reject</button>
@@ -107,7 +108,10 @@ $pageHeader = 'Dashboard';
 							</tbody>
 						</table>
 					<?php else: ?>
-						<p>No user payments found.</p>
+						<div class="alert alert-info d-flex align-items-center">
+							<i class="fas fa-inbox me-2"></i>
+							<span>No user payments found<?php echo ($selSession || $selHostel) ? ' for the selected session/hostel filters' : ''; ?>. New payments will appear here once students upload their receipts.</span>
+						</div>
 					<?php endif; ?>
 				</div>
 			</div>
@@ -154,14 +158,29 @@ $pageHeader = 'Dashboard';
 
 	$(document).on('click', '.view-payment', function () {
 			const userId = this.getAttribute('data-userid');
+			const paymentId = this.getAttribute('data-paymentid') || '';
 			const viewModalEl = document.getElementById('viewModal');
 			if (!viewModalEl) return;
+			const modalBody = document.querySelector('#viewModal .modal-body');
 			var viewModal = bootstrap.Modal.getOrCreateInstance(viewModalEl);
 			viewModal.show();
-			fetch(`php/fetch_user_d.php?id=${userId}`)
+			// Show a loading state immediately so it's clear data is coming
+			modalBody.innerHTML = `
+				<div class="text-center py-4">
+					<div class="spinner-border text-primary" role="status"></div>
+					<p class="mt-3 mb-0 text-muted">Loading payment details...</p>
+				</div>`;
+			fetch(`php/fetch_user_d.php?id=${encodeURIComponent(userId)}&pid=${encodeURIComponent(paymentId)}`)
 				.then(response => response.json())
 				.then(data => {
-					const modalBody = document.querySelector('#viewModal .modal-body');
+					if (data.error) {
+						modalBody.innerHTML = `<div class="alert alert-danger mb-0">${esc(data.error)}</div>`;
+						return;
+					}
+					if (!data.paymentDate) {
+						modalBody.innerHTML = `<div class="alert alert-warning mb-0">No payment record found for this student.</div>`;
+						return;
+					}
 					modalBody.innerHTML = `
 						<ul class="list-group mt-3">
 							<li class="list-group-item"><strong>First Name:</strong> ${esc(data.firstName)}</li>
@@ -172,8 +191,8 @@ $pageHeader = 'Dashboard';
 							<li class="list-group-item"><strong>Bank Name:</strong> ${esc(data.bankName)}</li>
 							<li class="list-group-item"><strong>Payment Date:</strong> ${esc(data.paymentDate)}</li>
 						</ul>
-						${data.paymentInfo ? `<div class="mt-3">
-							<img src="data:image/jpeg;base64,${esc(data.paymentInfo)}" width="100%" height="auto" class="img-fluid">
+						${data.has_proof ? `<div class="mt-3">
+							<img src="php/payment_proof.php?pid=${encodeURIComponent(data.payment_id || paymentId)}" width="100%" height="auto" class="img-fluid" alt="Payment receipt">
 						</div>` : '<p class="text-muted mt-3">No payment proof attached.</p>'}
 						<form id="reservationForm"> 
 							<div class="mb-4">
@@ -201,8 +220,7 @@ $pageHeader = 'Dashboard';
 				})
 				.catch(error => {
 					console.error('Error fetching user details:', error);
-					const modalBody = document.querySelector('#viewModal .modal-body');
-					modalBody.textContent = 'Failed to load payment details.';
+					modalBody.innerHTML = '<div class="alert alert-danger mb-0">Failed to load payment details.</div>';
 				});
 	});
 

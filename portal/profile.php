@@ -209,26 +209,20 @@ if ($fullName === '') {
 					</div>
 				</div>
 				<ul class="metismenu" id="menu">
-					<li><a class="has-arrow " href="javascript:void()" aria-expanded="false">
+					<li><a href="dashboard.php" data-pt-nav aria-expanded="false">
 							<i class="flaticon-025-dashboard"></i>
 							<span class="nav-text">Dashboard</span>
 						</a>
-						<ul aria-expanded="false">
-							<li><a href="book-hostel.php" data-pt-nav>Upload Proof</a></li>
-							<li><a href="check-room.php" data-pt-nav>Check Status</a></li>
-
-						</ul>
-
 					</li>
-					<li><a class="has-arrow " href="javascript:void()" aria-expanded="false">
-							<i class="flaticon-093-waving"></i>
-							<span class="nav-text">Complain</span>
+					<li><a href="book-hostel.php" data-pt-nav aria-expanded="false">
+							<i class="flaticon-046-home"></i>
+							<span class="nav-text">Book Room</span>
 						</a>
-						<ul aria-expanded="false">
-							<li><a href="#">Payment Issue</a></li>
-							<li><a href="#">Repair Issues</a></li>
-
-						</ul>
+					</li>
+					<li><a href="check-room.php" data-pt-nav aria-expanded="false">
+							<i class="flaticon-046-home"></i>
+							<span class="nav-text">Check Status</span>
+						</a>
 					</li>
 
 				</ul>

@@ -54,6 +54,53 @@ try {
     $csvFile = fopen($file['tmp_name'], 'r');
     $header = fgetcsv($csvFile); // skip header
 
+    // Map columns by header name so the template round-trips cleanly. Supports
+    // both the Download CSV columns (10 cols: Serial Number, Student Name,
+    // Matric No, Department, Parent Number, Level, Student Number, Room Bunk,
+    // Bed Space, Hostel) and the older snake_case template (8 cols).
+    $colMap = array();
+    if (is_array($header)) {
+        foreach ($header as $i => $h) {
+            $norm = strtolower(trim((string)$h));
+            $norm = preg_replace('/[\s_]+/', '', $norm);
+            $norm = str_replace('-', '', $norm);
+            switch ($norm) {
+                case 'studentname':
+                case 'studentname2':
+                    $colMap['student_name'] = $i;
+                    break;
+                case 'matricno':
+                    $colMap['matric_no'] = $i;
+                    break;
+                case 'department':
+                    $colMap['department'] = $i;
+                    break;
+                case 'parentnumber':
+                    $colMap['parent_number'] = $i;
+                    break;
+                case 'level':
+                    $colMap['level'] = $i;
+                    break;
+                case 'studentnumber':
+                    $colMap['student_number'] = $i;
+                    break;
+                case 'roombunk':
+                case 'room':
+                    $colMap['room_bunk'] = $i;
+                    break;
+                case 'bedspace':
+                case 'bunkspace':
+                    $colMap['bed_space'] = $i;
+                    break;
+                case 'serialnumber':
+                case 'hostel':
+                    $colMap[$norm] = $i; // informational columns, ignored on import
+                    break;
+            }
+        }
+    }
+    $hasNamedCols = isset($colMap['student_name']) || isset($colMap['matric_no']);
+
     $importCount = 0;
     $errorCount = 0;
     $errors = [];
@@ -61,20 +108,33 @@ try {
     $conn->begin_transaction();
 
     while (($row = fgetcsv($csvFile)) !== FALSE) {
-        if (count($row) < 8) {
-            $errorCount++;
-            $errors[] = "Row skipped: Not enough columns (expected 8: student_name, matric_no, department, parent_number, level, student_number, room_bunk, bed_space)";
-            continue;
+        if ($hasNamedCols) {
+            $get = function ($key) use ($row, $colMap) {
+                return isset($colMap[$key]) && isset($row[$colMap[$key]]) ? $row[$colMap[$key]] : '';
+            };
+            $student_name = trim((string)$get('student_name'));
+            $matric_no = trim((string)$get('matric_no'));
+            $department = trim((string)$get('department'));
+            $parent_number = trim((string)$get('parent_number'));
+            $level = trim((string)$get('level'));
+            $student_number = trim((string)$get('student_number'));
+            $room_bunk = trim((string)$get('room_bunk'));
+            $bed_space = trim((string)$get('bed_space'));
+        } else {
+            if (count($row) < 8) {
+                $errorCount++;
+                $errors[] = "Row skipped: Not enough columns (expected: student_name, matric_no, department, parent_number, level, student_number, room_bunk, bed_space)";
+                continue;
+            }
+            $student_name = trim($row[0]);
+            $matric_no = trim($row[1]);
+            $department = trim($row[2]);
+            $parent_number = trim($row[3]);
+            $level = trim($row[4]);
+            $student_number = trim($row[5]);
+            $room_bunk = trim($row[6]);
+            $bed_space = trim($row[7]);
         }
-
-        $student_name = trim($row[0]);
-        $matric_no = trim($row[1]);
-        $department = trim($row[2]);
-        $parent_number = trim($row[3]);
-        $level = trim($row[4]);
-        $student_number = trim($row[5]);
-        $room_bunk = trim($row[6]);
-        $bed_space = trim($row[7]);
 
         // Derive the bed space from the room_bunk tail when the CSV doesn't
         // provide one (e.g. "ROOM 323-2U" -> "Bunk 2 Up").

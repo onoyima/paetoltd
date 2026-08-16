@@ -206,26 +206,20 @@ $hostels = pt_all_hostels();
 					</div>
 				</div>
 				<ul class="metismenu" id="menu">
-					<li><a class="has-arrow " href="javascript:void()" aria-expanded="false">
+					<li><a href="dashboard.php" data-pt-nav aria-expanded="false">
 							<i class="flaticon-025-dashboard"></i>
 							<span class="nav-text">Dashboard</span>
 						</a>
-						<ul aria-expanded="false">
-							<li><a href="book-hostel.php" data-pt-nav>Upload Proof</a></li>
-							<li><a href="check-room.php" data-pt-nav>Check Status</a></li>
-
-						</ul>
-
 					</li>
-					<li><a class="has-arrow " href="javascript:void()" aria-expanded="false">
-							<i class="flaticon-093-waving"></i>
-							<span class="nav-text">Complain</span>
+					<li class="mm-active"><a href="book-hostel.php" data-pt-nav aria-expanded="false">
+							<i class="flaticon-046-home"></i>
+							<span class="nav-text">Book Room</span>
 						</a>
-						<ul aria-expanded="false">
-							<li><a href="#">Payment Issue</a></li>
-							<li><a href="#">Repair Issues</a></li>
-
-						</ul>
+					</li>
+					<li><a href="check-room.php" data-pt-nav aria-expanded="false">
+							<i class="flaticon-046-home"></i>
+							<span class="nav-text">Check Status</span>
+						</a>
 					</li>
 
 				</ul>
@@ -337,7 +331,8 @@ $hostels = pt_all_hostels();
 										</div>
 										<div class="col-sm-6 m-b30">
 											<label class="form-label" for="paymentInfo">Payment Receipt</label>
-											<input type="file" class="form-control" name="paymentInfo" required>
+											<input type="file" class="form-control" name="paymentInfo" accept="image/*" required>
+											<small class="form-text text-muted">Only image files (JPEG, PNG, GIF, WebP). Oversized images are compressed automatically to a maximum of 2MB.</small>
 										</div>
 										<div class="col-sm-6 m-b30">
 											<label class="form-label">Matriculation Number</label>

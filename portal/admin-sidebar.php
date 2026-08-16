@@ -220,17 +220,6 @@ include 'php/fetch_admin_info.php'; // Include file to fetch admin info
 						</li>
 					<?php endif; ?>
 
-					<!-- <li><a class="has-arrow " href="javascript:void()" aria-expanded="false">
-							<i class="flaticon-093-waving"></i>
-							<span class="nav-text">Complain</span>
-						</a>
-						<ul aria-expanded="false">
-							<li><a href="#">Payment Issue</a></li>
-							<li><a href="#">Repair Issues</a></li>
-
-						</ul>
-					</li> -->
-
 				</ul>
 
 				<div class="pt-sidebar-foot">

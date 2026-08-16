@@ -27,6 +27,92 @@ if (!$activeSession) {
 }
 $sessionId = (int)$activeSession['id'];
 
+/* ------------------------------------------------------------------
+   Image helpers: receipts are saved to disk (uploads/payments) and
+   compressed to at most 2MB so the system stays fast. The old BLOB
+   column is left untouched for legacy rows.
+   ------------------------------------------------------------------ */
+function pt_save_payment_image($srcTmp, $dstPath, $maxBytes = 2097152) {
+    if (!function_exists('imagecreatetruecolor')) {
+        return false;
+    }
+
+    $info = @getimagesize($srcTmp);
+    if (!$info) {
+        return false;
+    }
+
+    $mime = $info['mime'];
+    $img = null;
+    switch ($mime) {
+        case 'image/jpeg': $img = @imagecreatefromjpeg($srcTmp); break;
+        case 'image/png':  $img = @imagecreatefrompng($srcTmp); break;
+        case 'image/gif':  $img = @imagecreatefromgif($srcTmp); break;
+        case 'image/webp': $img = @imagecreatefromwebp($srcTmp); break;
+        default:           return false;
+    }
+    if (!$img) {
+        return false;
+    }
+
+    $w = imagesx($img);
+    $h = imagesy($img);
+
+    // Cap dimensions so huge camera photos don't inflate the file size
+    $maxDim = 2000;
+    if (max($w, $h) > $maxDim) {
+        $scale = $maxDim / max($w, $h);
+        $nw = max(1, (int)round($w * $scale));
+        $nh = max(1, (int)round($h * $scale));
+        $resized = imagecreatetruecolor($nw, $nh);
+        $white = imagecolorallocate($resized, 255, 255, 255);
+        imagefilledrectangle($resized, 0, 0, $nw, $nh, $white);
+        imagecopyresampled($resized, $img, 0, 0, 0, 0, $nw, $nh, $w, $h);
+        imagedestroy($img);
+        $img = $resized;
+        $w = $nw;
+        $h = $nh;
+    }
+
+    $data = null;
+    $quality = 85;
+    while ($quality >= 30) {
+        ob_start();
+        imagejpeg($img, null, $quality);
+        $data = ob_get_clean();
+        if (strlen($data) <= $maxBytes) {
+            break;
+        }
+        $quality -= 10;
+    }
+
+    // Still too big? Shrink the image in half-steps until it fits
+    $guard = 0;
+    while ($data !== null && strlen($data) > $maxBytes && max($w, $h) > 200 && $guard < 12) {
+        $nw = max(1, (int)round($w / 2));
+        $nh = max(1, (int)round($h / 2));
+        $resized = imagecreatetruecolor($nw, $nh);
+        $white = imagecolorallocate($resized, 255, 255, 255);
+        imagefilledrectangle($resized, 0, 0, $nw, $nh, $white);
+        imagecopyresampled($resized, $img, 0, 0, 0, 0, $nw, $nh, $w, $h);
+        imagedestroy($img);
+        $img = $resized;
+        $w = $nw;
+        $h = $nh;
+        ob_start();
+        imagejpeg($img, null, 70);
+        $data = ob_get_clean();
+        $guard++;
+    }
+    imagedestroy($img);
+
+    if ($data === null || strlen($data) > $maxBytes) {
+        return false;
+    }
+
+    return file_put_contents($dstPath, $data) !== false;
+}
+
 // Check if form is submitted
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Always use the session user id (prevents IDOR)
@@ -39,61 +125,63 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $response['error'] = "Bank name and payer name are required";
     } elseif ($hostelId <= 0 || !in_array($hostelId, array_map('intval', array_column(pt_all_hostels(), 'id')), true)) {
         $response['error'] = "Please select a valid hostel";
+    } elseif (!isset($_FILES['paymentInfo']) || $_FILES['paymentInfo']['error'] !== UPLOAD_ERR_OK) {
+        $response['error'] = "Please select a file to upload";
     } else {
-        // Check if user has already submitted payment info for this session
-        $stmt_check = $conn->prepare("SELECT userId FROM payments WHERE userId = ? AND session_id = ?");
-        $stmt_check->bind_param("ii", $userId, $sessionId);
-        $stmt_check->execute();
-        $stmt_check->store_result();
+        $file = $_FILES['paymentInfo'];
 
-        if ($stmt_check->num_rows > 0) {
-            // User has already submitted payment info
-            $response['error'] = "User has already submitted payment information";
+        // Detect the real file type instead of trusting the client MIME header
+        $finfo = finfo_open(FILEINFO_MIME_TYPE);
+        $fileType = $finfo ? finfo_file($finfo, $file['tmp_name']) : $file['type'];
+        if ($finfo) {
+            finfo_close($finfo);
+        }
+
+        // Only image files are accepted (no PDFs or anything else)
+        $allowedTypes = array('image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp');
+        if (!in_array($fileType, $allowedTypes, true)) {
+            $response['error'] = "Only image files (JPEG, PNG, GIF, WebP) are allowed. PDFs are not accepted.";
         } else {
-            // Handle file upload if a file is selected
-            if (isset($_FILES['paymentInfo']) && $_FILES['paymentInfo']['error'] === UPLOAD_ERR_OK) {
-                // Enforce a size limit (5MB)
-                if ((int)$_FILES['paymentInfo']['size'] <= 0 || (int)$_FILES['paymentInfo']['size'] > 5242880) {
-                    $response['error'] = "File is too large. Maximum allowed size is 5MB.";
+            // A too-large image is allowed but is auto-compressed to at most 2MB.
+            $uploadDir = __DIR__ . '/../uploads/payments/';
+            if (!is_dir($uploadDir) && !mkdir($uploadDir, 0775, true)) {
+                $response['error'] = "Upload folder is not writable.";
+            } else {
+                $fileName = 'pay_' . $userId . '_' . $sessionId . '_' . time() . '_' . bin2hex(random_bytes(4)) . '.jpg';
+                $relPath = 'uploads/payments/' . $fileName;
+                $absPath = $uploadDir . $fileName;
+
+                if (!pt_save_payment_image($file['tmp_name'], $absPath, 2097152)) {
+                    $response['error'] = "Could not process the image. Please upload a valid image under 2MB.";
                 } else {
-                    // Detect the real file type instead of trusting the client MIME header
-                    $allowed_types = array('application/pdf', 'image/jpeg', 'image/jpg', 'image/png');
-                    $finfo = finfo_open(FILEINFO_MIME_TYPE);
-                    $file_type = $finfo ? finfo_file($finfo, $_FILES['paymentInfo']['tmp_name']) : $_FILES['paymentInfo']['type'];
-                    if ($finfo) {
-                        finfo_close($finfo);
-                    }
+                    // Check if user has already submitted payment info for this session
+                    $stmt_check = $conn->prepare("SELECT userId FROM payments WHERE userId = ? AND session_id = ?");
+                    $stmt_check->bind_param("ii", $userId, $sessionId);
+                    $stmt_check->execute();
+                    $stmt_check->store_result();
 
-                    if (!in_array($file_type, $allowed_types)) {
-                        $response['error'] = "File type not supported. Please upload PDF, JPEG, or PNG files.";
+                    if ($stmt_check->num_rows > 0) {
+                        $stmt_check->close();
+                        @unlink($absPath); // don't keep an orphaned file
+                        $response['error'] = "User has already submitted payment information";
                     } else {
-                        // Get file data
-                        $fileTmpPath = $_FILES['paymentInfo']['tmp_name'];
-                        $fileData = file_get_contents($fileTmpPath);
+                        $stmt_check->close();
 
-                        // Prepare SQL query
-                        $stmt_insert = $conn->prepare("INSERT INTO payments (userId, session_id, hostel_id, paymentInfo, bankName, payers_name, status, uploadDate) VALUES (?, ?, ?, ?, ?, ?, 'Pending', NOW())");
-                        $stmt_insert->bind_param("iiisss", $userId, $sessionId, $hostelId, $fileData, $bankName, $payersName);
+                        // Store the file path on disk; keep paymentInfo NULL for new rows
+                        $stmt_insert = $conn->prepare("INSERT INTO payments (userId, session_id, hostel_id, paymentInfo, payment_file, bankName, payers_name, status, uploadDate) VALUES (?, ?, ?, NULL, ?, ?, ?, 'Pending', NOW())");
+                        $stmt_insert->bind_param("iissss", $userId, $sessionId, $hostelId, $relPath, $bankName, $payersName);
 
-                        // Execute the query
                         if ($stmt_insert->execute()) {
-                            // Success
                             $response['success'] = "Payment information uploaded successfully";
                         } else {
-                            // Error
+                            @unlink($absPath);
                             $response['error'] = "Failed to upload payment information";
                         }
-
                         $stmt_insert->close();
                     }
                 }
-            } else {
-                // No file selected
-                $response['error'] = "Please select a file to upload";
             }
         }
-
-        $stmt_check->close();
     }
 }
 
@@ -102,4 +190,3 @@ $conn->close();
 // Return JSON response
 header('Content-Type: application/json');
 echo json_encode($response);
-?>

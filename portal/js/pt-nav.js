@@ -241,7 +241,9 @@
         history.replaceState({ pt: url.href }, '', url.href);
       }
       window.scrollTo(0, 0);
-      window.dispatchEvent(new Event('pt:content-loaded'));
+      // Dispatch on document so both document- and window-level listeners fire
+      // (window.dispatchEvent never reaches document listeners).
+      document.dispatchEvent(new Event('pt:content-loaded'));
     });
   }
 

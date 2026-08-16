@@ -22,6 +22,10 @@ $conn = null;
 // Use return-value style (no exceptions) so failed attempts can fall through to the next port
 mysqli_report(MYSQLI_REPORT_OFF);
 
+// Cap connection attempts so a dead/firewalled port fails fast instead of hanging ~4s
+ini_set('mysqli.connect_timeout', '2');
+ini_set('default_socket_timeout', '2');
+
 // Attempt to establish a MySQLi connection
 if ($host == 'localhost' && file_exists($unix_socket)) {
     // Use Unix socket if host is localhost and socket file exists (MAMP on macOS)
@@ -29,8 +33,10 @@ if ($host == 'localhost' && file_exists($unix_socket)) {
 }
 
 if (!$conn || $conn->connect_error) {
-    // Fall back to TCP/IP, trying MAMP default port (8889) then XAMPP default (3306)
-    foreach (array(8889, 3306) as $port) {
+    // Fall back to TCP/IP. Try the XAMPP default (3306) first, then MAMP (8889),
+    // so the common XAMPP case connects immediately and the dead 8889 port is
+    // only probed when 3306 is unavailable.
+    foreach (array(3306, 8889) as $port) {
         $conn = @new mysqli($host, $username, $password, $dbname, $port);
         if (!$conn->connect_error) {
             break;

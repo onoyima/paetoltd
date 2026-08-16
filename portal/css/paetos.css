@@ -266,7 +266,7 @@ body:not([data-theme-version="dark"]) {
 /* Entrance animation for page content */
 .content-body,
 #main-wrapper .content-body {
-  animation: pt-fadeup 0.45s ease both;
+  animation: pt-fadeup 0.45s ease;
 }
 @keyframes pt-fadeup {
   from { opacity: 0; transform: translateY(8px); }
@@ -492,7 +492,7 @@ html[data-pt-theme="dark"] #pt-nav-spinner {
 
 /* Entrance animation when a page is swapped into the shell */
 #pt-content.pt-swapped {
-  animation: pt-fadeup 0.35s ease both;
+  animation: pt-fadeup 0.35s ease;
 }
 
 /* ------------------------------ Sidebar footer (dark toggle + logout) ------------------------------ */

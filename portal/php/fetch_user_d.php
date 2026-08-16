@@ -20,40 +20,36 @@ ob_start();
 
 // Check if user ID is provided
 if (isset($_GET['id'])) {
-    $userId = $_GET['id'];
+    $userId = (int)$_GET['id'];
+    $paymentId = isset($_GET['pid']) ? (int)$_GET['pid'] : 0;
 
-    // Fetch user details from the userregistration table and payment details from the payments table
-    $sql = "SELECT u.firstName, u.lastName, u.email, u.contactNo, u.userImage, p.bankName, p.payers_name, p.uploadDate AS paymentDate, p.room AS roomNumber, p.bed AS bedNumber, p.paymentInfo
+    // Fetch user details + the specific payment being verified. The receipt
+    // image itself is NOT sent here (use php/payment_proof.php?pid=... to
+    // stream it), keeping this endpoint fast.
+    $sql = "SELECT u.firstName, u.lastName, u.email, u.contactNo,
+                   p.id AS payment_id, p.bankName, p.payers_name,
+                   p.uploadDate AS paymentDate, p.room AS roomNumber, p.bed AS bedNumber,
+                   p.payment_file, (p.paymentInfo IS NOT NULL) AS has_blob
             FROM userregistration u
-            LEFT JOIN payments p ON u.id = p.userId
+            LEFT JOIN payments p ON u.id = p.userId AND (p.id = ? OR (0 = ? AND p.id = (SELECT MAX(p2.id) FROM payments p2 WHERE p2.userId = u.id)))
             WHERE u.id = ?";
+
     $stmt = $conn->prepare($sql);
-    $stmt->bind_param('i', $userId);
+    $stmt->bind_param('iii', $paymentId, $paymentId, $userId);
     $stmt->execute();
     $result = $stmt->get_result();
 
     if ($result->num_rows > 0) {
         $row = $result->fetch_assoc();
 
-        // Encode user image as base64 if it exists
-        if (!empty($row['userImage'])) {
-            $row['userImage'] = base64_encode($row['userImage']);
-        } else {
-            $row['userImage'] = null; // or handle differently if no image available
-        }
+        $row['has_proof'] = !empty($row['payment_file']) || !empty($row['has_blob']);
 
-        // Encode payment info as base64 if it exists
-        if (!empty($row['paymentInfo'])) {
-            $row['paymentInfo'] = base64_encode($row['paymentInfo']);
-        } else {
-            $row['paymentInfo'] = null; // or handle differently if no payment info available
-        }
+        // Keep the response tiny; the image is streamed separately
+        unset($row['has_blob']);
 
-        // Clean the buffer and return user and payment details as JSON response
         ob_end_clean();
         echo json_encode($row);
     } else {
-        // Clean the buffer and return specific error message
         ob_end_clean();
         echo json_encode(array('error' => 'No user found with ID: ' . $userId));
     }
@@ -61,9 +57,6 @@ if (isset($_GET['id'])) {
     $stmt->close();
     $conn->close();
 } else {
-    // Clean the buffer and return specific error message
     ob_end_clean();
     echo json_encode(array('error' => 'User ID not provided'));
 }
-
-?>
