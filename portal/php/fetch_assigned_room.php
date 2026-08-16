@@ -36,24 +36,27 @@ try {
     // Query to fetch assigned rooms and student details for the session,
     // optionally filtered by hostel
     $sql = "SELECT 
-                `sn`,
-                `hostel_id`,
-                `student_name`,
-                `matric_no`,
-                `department`,
-                `parent_number`,
-                `level`,
-                `student_number`,
-                `room_bunk` 
-            FROM `assign_room`
-            WHERE `session_id` = ?";
+                ar.`sn`,
+                ar.`hostel_id`,
+                h.`name` AS `hostel_name`,
+                ar.`student_name`,
+                ar.`matric_no`,
+                ar.`department`,
+                ar.`parent_number`,
+                ar.`level`,
+                ar.`student_number`,
+                ar.`room_bunk` 
+            FROM `assign_room` ar
+            LEFT JOIN `hostel` h ON h.id = ar.hostel_id
+            WHERE ar.`session_id` = ?";
     $params = [$sessionId];
     $types = 'i';
     if ($hostelId > 0) {
-        $sql .= " AND `hostel_id` = ?";
+        $sql .= " AND ar.`hostel_id` = ?";
         $params[] = $hostelId;
         $types .= 'i';
     }
+    $sql .= " ORDER BY ar.`sn` ASC";
 
     $stmt = $conn->prepare($sql);
     $stmt->bind_param($types, ...$params);
@@ -69,6 +72,7 @@ try {
         $users[] = [
             'sn' => $row['sn'],
             'hostel_id' => (int)$row['hostel_id'],
+            'hostel_name' => $row['hostel_name'],
             'student_name' => $row['student_name'],
             'matric_no' => $row['matric_no'],
             'department' => $row['department'],
