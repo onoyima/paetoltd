@@ -1,0 +1,236 @@
+    <!DOCTYPE html>
+    <html lang="en">
+
+
+    <head>
+
+        <!-- Meta -->
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+
+        <!-- Mobile Specific -->
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <!-- PAGE TITLE HERE -->
+        <title>Pa-etos Hostel Accommodation </title>
+
+        <!-- Favicon icon -->
+        <link rel="shortcut icon" type="image/png" href="images/paetoa.png">
+        <link href="vendor/bootstrap-select/dist/css/bootstrap-select.min.css" rel="stylesheet">
+        <link class="main-css" href="css/style.css" rel="stylesheet">
+        <link href="vendor/toastr/css/toastr.min.css" rel="stylesheet">
+        <link href="css/auth.css" rel="stylesheet">
+    </head>
+
+    <body>
+
+        <div id="preloader">
+            <div class="pt-pre-brand">
+                <img class="pt-pre-logo" src="images/paetoa.png" alt="Pa-etos Logo" width="70" height="70">
+                <div class="pt-spinner"></div>
+            </div>
+        </div>
+
+        <div class="auth-wrapper">
+            <div class="container py-4">
+                <div class="row justify-content-center">
+                    <div class="col-xl-10 col-lg-11">
+                        <div class="auth-card auth-card-lg">
+                            <div class="row g-0">
+                                <div class="col-lg-4 d-none d-lg-block">
+                                    <div class="auth-aside h-100">
+                                        <div>
+                                            <span class="auth-brand-badge"><i class="fa fa-user-plus"></i> New Student</span>
+                                            <h2>Create your<br>account</h2>
+                                            <p>Register with your details to begin your hostel booking. You will be able to upload your payment proof once signed in.</p>
+                                            <ul class="auth-feature-list">
+                                                <li><i class="fa fa-check"></i> Fast online registration</li>
+                                                <li><i class="fa fa-check"></i> Upload your passport</li>
+                                                <li><i class="fa fa-check"></i> Track your booking status</li>
+                                            </ul>
+                                        </div>
+                                        <div class="auth-aside-contact">
+                                            <p><i class="fa fa-phone"></i> +2348033300519</p>
+                                            <p><i class="fa fa-envelope"></i> info@pa-etosltd.com.ng</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-lg-8">
+                                    <div class="auth-main">
+                                        <div class="text-center">
+                                            <img class="auth-logo" src="images/paetoa.png" alt="Pa-etos Logo">
+                                            <h3>Sign up your account</h3>
+                                            <p class="auth-subtitle">Fill in the form below to create your account.</p>
+                                        </div>
+
+                                        <form id="signupForm" action="php/register.php" method="post" enctype="multipart/form-data">
+                                            <div class="row g-3">
+                                                <div class="col-md-6">
+                                                    <label class="auth-form-label" for="regNo">Registration Number</label>
+                                                    <input type="text" class="form-control" id="regNo" name="regNo" placeholder="Matric No. / Reg No">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="auth-form-label" for="firstName">First Name</label>
+                                                    <input type="text" class="form-control" id="firstName" name="firstName" required>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="auth-form-label" for="middleName">Middle Name</label>
+                                                    <input type="text" class="form-control" id="middleName" name="middleName">
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="auth-form-label" for="lastName">Last Name</label>
+                                                    <input type="text" class="form-control" id="lastName" name="lastName" required>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="auth-form-label" for="gender">Gender</label>
+                                                    <select class="form-control" id="gender" name="gender" required>
+                                                        <option value="" disabled selected>Select gender</option>
+                                                        <option value="Female">Female</option>
+                                                        <option value="Male">Male</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="auth-form-label" for="level">Level</label>
+                                                    <select class="form-control" id="level" name="level" required>
+                                                        <option value="" disabled selected>Select level</option>
+                                                        <option value="100">100</option>
+                                                        <option value="200">200</option>
+                                                        <option value="300">300</option>
+                                                        <option value="400">400</option>
+                                                        <option value="500">500</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="auth-form-label" for="department">Department</label>
+                                                    <input type="text" class="form-control" id="department" name="department" required>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="auth-form-label" for="parentPhone">Parent Phone</label>
+                                                    <input type="text" class="form-control" id="parentPhone" name="parentPhone" required>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="auth-form-label" for="email">Email</label>
+                                                    <input type="email" class="form-control" id="email" name="email" required>
+                                                </div>
+                                                <div class="col-md-6">
+                                                    <label class="auth-form-label" for="contactNo">Contact Phone</label>
+                                                    <input type="text" class="form-control" id="contactNo" name="contactNo" required>
+                                                </div>
+
+                                                <div class="col-12 position-relative">
+                                                    <label class="auth-form-label" for="password">Password</label>
+                                                    <div class="auth-input-group">
+                                                        <i class="fa fa-lock"></i>
+                                                        <input type="password" id="password" name="password" class="form-control" placeholder="Enter password" required>
+                                                        <span class="show-pass eye"><i class="fa fa-eye-slash"></i><i class="fa fa-eye"></i></span>
+                                                    </div>
+                                                </div>
+                                                <div class="col-md-7">
+                                                    <label class="auth-form-label" for="secretQuestion">Secret Question</label>
+                                                    <select class="form-control" id="secretQuestion" name="secretQuestion" required>
+                                                        <option value="">Select your secret question</option>
+                                                        <option value="What is your mother's maiden name?">What is your mother's maiden name?</option>
+                                                        <option value="What was the name of your first pet?">What was the name of your first pet?</option>
+                                                        <option value="What is your favorite book?">What is your favorite book?</option>
+                                                        <option value="What is your favorite pet?">What is your favorite pet?</option>
+                                                    </select>
+                                                </div>
+                                                <div class="col-md-5">
+                                                    <label class="auth-form-label" for="secretAnswer">Secret Answer</label>
+                                                    <input type="text" id="secretAnswer" name="secretAnswer" class="form-control" placeholder="Enter your secret answer" required>
+                                                </div>
+                                                <div class="col-12">
+                                                    <label class="auth-form-label" for="userImage">Upload passport Image</label>
+                                                    <input type="file" class="form-control" id="userImage" name="userImage" required>
+                                                </div>
+                                            </div>
+
+                                            <div class="d-grid gap-2 mt-4">
+                                                <button type="submit" class="btn btn-primary auth-btn">Sign up</button>
+                                            </div>
+                                        </form>
+
+                                        <p class="auth-footer-note">Already have an account? <a href="index.html">Sign in</a></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
+
+        <!--**********************************
+        Scripts
+    ***********************************-->
+        <!-- Required vendors -->
+        <script src="vendor/global/global.min.js"></script>
+        <script src="vendor/bootstrap-select/dist/js/bootstrap-select.min.js"></script>
+        <script src="js/dlabnav-init.js"></script>
+        <script src="js/custom.min.js"></script>
+        <script src="js/demo.js"></script>
+        <script src="vendor/toastr/js/toastr.min.js"></script>
+        <!-- <script src="js/styleSwitcher.js"></script> -->
+
+        <script>
+            // Toastr global options
+            toastr.options = {
+                closeButton: true,
+                progressBar: true,
+                newestOnTop: true,
+                preventDuplicates: true,
+                positionClass: "toast-top-right",
+                showDuration: 300,
+                hideDuration: 900,
+                timeOut: 5000,
+                extendedTimeOut: 1000,
+                showMethod: "fadeIn",
+                hideMethod: "fadeOut",
+                tapToDismiss: false
+            };
+
+            // JavaScript to handle form submission and display messages
+            document.getElementById("signupForm").addEventListener("submit", function (event) {
+                event.preventDefault(); // Prevent default form submission
+
+                const submitBtn = this.querySelector('button[type="submit"]');
+                const originalText = submitBtn.textContent;
+                submitBtn.textContent = 'Creating account...';
+                submitBtn.disabled = true;
+
+                // Fetch form data
+                let formData = new FormData(this);
+
+                // Submit form data using fetch API
+                fetch('php/register.php', {
+                    method: 'POST',
+                    body: formData
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.error) {
+                            submitBtn.textContent = originalText;
+                            submitBtn.disabled = false;
+                            toastr.error(data.error, 'Registration Failed');
+                        } else if (data.success) {
+                            toastr.success(data.success, 'Registration Successful');
+                            setTimeout(() => {
+                                window.location.href = "index.html";
+                            }, 2000); // Redirect after 2 seconds
+                        }
+                    })
+                    .catch(error => {
+                        submitBtn.textContent = originalText;
+                        submitBtn.disabled = false;
+                        toastr.error('Unable to reach the server. Please try again.', 'Network Error');
+                    });
+            });
+        </script>
+
+    </body>
+
+    </html>

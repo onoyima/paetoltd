@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <!-- Meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+    <!-- Mobile Specific -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    
+    <!-- PAGE TITLE HERE -->
+    <title>Pa-etos Hostel Accommodation </title>
+
+    <!-- Favicon icon -->
+    <link rel="shortcut icon" type="image/png" href="images/paetoa.png">
+    <link href="vendor/bootstrap-select/dist/css/bootstrap-select.min.css" rel="stylesheet">
+    <link class="main-css" href="css/style.css" rel="stylesheet">
+    <link href="vendor/toastr/css/toastr.min.css" rel="stylesheet">
+    <link href="css/auth.css" rel="stylesheet">
+</head>
+
+<body>
+    <div id="preloader">
+        <div class="pt-pre-brand">
+            <img class="pt-pre-logo" src="images/paetoa.png" alt="Pa-etos Logo" width="70" height="70">
+            <div class="pt-spinner"></div>
+        </div>
+    </div>
+
+    <div class="auth-wrapper">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-10 col-md-11">
+                    <div class="auth-card">
+                        <div class="row g-0">
+                            <div class="col-lg-5 d-none d-lg-block">
+                                <div class="auth-aside h-100">
+                                    <div>
+                                        <span class="auth-brand-badge"><i class="fa fa-building"></i> Veritas University Abuja</span>
+                                        <h2>Welcome to<br>PA-ETOS Hostel</h2>
+                                        <p>Secure your accommodation for the 2026/2027 session. Sign in to book a room, upload your payment proof, and access your allocation slip.</p>
+                                        <ul class="auth-feature-list">
+                                            <li><i class="fa fa-check"></i> Online room booking</li>
+                                            <li><i class="fa fa-check"></i> Payment receipt upload</li>
+                                            <li><i class="fa fa-check"></i> Printable allocation slip</li>
+                                        </ul>
+                                    </div>
+                                    <div class="auth-aside-contact">
+                                        <p><i class="fa fa-phone"></i> +2348033300519</p>
+                                        <p><i class="fa fa-envelope"></i> info@pa-etosltd.com.ng</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-7">
+                                <div class="auth-main">
+                                    <div class="text-center">
+                                        <a href="index.html"><img class="auth-logo" src="images/paetoa.png" alt="Pa-etos Logo"></a>
+                                    </div>
+                                    <h3 class="text-center">Sign in your account</h3>
+                                    <p class="auth-subtitle text-center">Welcome back! Please enter your details to continue.</p>
+
+                                    <form id="loginForm" action="php/login.php" method="post">
+                                        <div class="form-group mb-4">
+                                            <label class="auth-form-label" for="username">Email</label>
+                                            <div class="auth-input-group">
+                                                <i class="fa fa-envelope"></i>
+                                                <input type="text" class="form-control" placeholder="Enter email" id="username" name="username" required>
+                                            </div>
+                                        </div>
+                                        <div class="form-group mb-3 position-relative">
+                                            <label class="auth-form-label" for="password">Password</label>
+                                            <div class="auth-input-group">
+                                                <i class="fa fa-lock"></i>
+                                                <input type="password" id="password" name="password" class="form-control" placeholder="Enter password" required>
+                                                <span class="show-pass eye"><i class="fa fa-eye-slash"></i><i class="fa fa-eye"></i></span>
+                                            </div>
+                                        </div>
+                                        <div class="form-row d-flex flex-wrap justify-content-between mb-3">
+                                            <div class="form-check custom-checkbox">
+                                                <input type="checkbox" class="form-check-input" id="rememberMe" name="rememberMe">
+                                                <label class="form-check-label" for="rememberMe">Remember me</label>
+                                            </div>
+                                            <a class="text-hover" href="forgot-password.php">Forgot Password?</a>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary auth-btn">Sign In</button>
+                                    </form>
+
+                                    <div class="auth-divider"><span>or</span></div>
+
+                                    <p class="auth-footer-note mb-0">Don't have an account? <a href="register.html">Sign up</a></p>
+                                    <div class="auth-help-link">
+                                        <a href="javascript:void(0)" onclick="sendWhatsApp()" aria-expanded="false">
+                                            <i class="fa fa-whatsapp"></i>
+                                            <span class="nav-text">Contact Admin</span>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Room Check Modal -->
+    <div class="modal fade" id="roomCheckModal" tabindex="-1" role="dialog" aria-labelledby="roomCheckModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="roomCheckModalLabel">Check Room Allocation</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="roomCheckForm">
+                        <h6 class="mb-3">Enter your details to check room allocation:</h6>
+                        <form id="studentSearchForm">
+                            <div class="form-group mb-3">
+                                <label for="searchInput">Matric Number, Phone Number, or Parent's Number:</label>
+                                <input type="text" class="form-control" id="searchInput" placeholder="Enter your matric number, phone number, or parent's number" required>
+                            </div>
+                            <div class="text-center">
+                                <button type="submit" class="btn btn-primary">Search Room</button>
+                            </div>
+                        </form>
+                    </div>
+                    <div id="roomResult" style="display: none;">
+                        <div id="roomDetails"></div>
+                        <div class="text-center mt-3">
+                            <button type="button" class="btn btn-success" id="printAllocationBtn">Print Allocation Slip</button>
+                            <button type="button" class="btn btn-secondary" id="searchAgainBtn">Search Again</button>
+                        </div>
+                    </div>
+                    <div id="noRoomFound" style="display: none;">
+                        <div class="alert alert-warning text-center">
+                            <h6>Student not found or no room allocated</h6>
+                            <p>Please check your details and try again, or contact the admin.</p>
+                            <div class="mt-3">
+                                <button class="btn btn-success me-2" onclick="window.open('tel:+2348033300519')">Call Admin</button>
+                                <button class="btn btn-primary" onclick="sendWhatsApp()">WhatsApp Admin</button>
+                            </div>
+                        </div>
+                        <div class="text-center mt-3">
+                            <button type="button" class="btn btn-secondary" id="searchAgainBtn2">Search Again</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Accommodation Fee Notice Modal -->
+    <div class="modal fade" id="feeNoticeModal" tabindex="-1" role="dialog" aria-labelledby="feeNoticeModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered" role="document">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title text-white" id="feeNoticeModalLabel">NOTICE ON ACCOMMODATION FEE</h5>
+                    <button type="button" class="btn-close text-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-center p-4">
+                    <p class="fs-16">This is to formally inform all students that the accommodation fee for old <strong>PA-ETOS Hostel</strong> for the <strong>2026/2027 academic session</strong> is <strong>&#8358;400,000 (Four Hundred Thousand Naira)</strong> only.</p>
+                    <div class="mt-4 text-end">
+                        <p class="mb-0"><strong>Signed</strong></p>
+                        <p class="text-muted">Management</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary btn-block" data-bs-dismiss="modal">I Understand</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="vendor/global/global.min.js"></script>
+    <script src="vendor/bootstrap-select/dist/js/bootstrap-select.min.js"></script>
+    <script src="js/custom.min.js"></script>
+    <script src="js/dlabnav-init.js"></script>
+    <script src="js/demo.js"></script>
+    <script src="vendor/toastr/js/toastr.min.js"></script>
+
+    <script>
+        function sendWhatsApp() {
+            const message = "I'm a student of veritas university, please I need your help.";
+            const encodedMessage = encodeURIComponent(message);
+            window.open(`https://wa.me/2348033300519?text=${encodedMessage}`, '_blank');
+        }
+
+        // Toastr global options
+        toastr.options = {
+            closeButton: true,
+            progressBar: true,
+            newestOnTop: true,
+            preventDuplicates: true,
+            positionClass: "toast-top-right",
+            showDuration: 300,
+            hideDuration: 900,
+            timeOut: 5000,
+            extendedTimeOut: 1000,
+            showMethod: "fadeIn",
+            hideMethod: "fadeOut",
+            tapToDismiss: false
+        };
+
+        // Trigger Notice Modal automatically on page load
+            var noticeModal = new bootstrap.Modal(document.getElementById('feeNoticeModal'));
+            noticeModal.show();
+
+        document.getElementById("loginForm").addEventListener("submit", function(event) {
+            event.preventDefault(); // Prevent default form submission
+
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Signing in...';
+            submitBtn.disabled = true;
+
+            // Fetch form data
+            let formData = new FormData(this);
+
+            // Submit form data using fetch API
+            fetch('php/login.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.error) {
+                    submitBtn.textContent = originalText;
+                    submitBtn.disabled = false;
+                    toastr.error(data.error, 'Login Failed');
+                } else if (data.redirect) {
+                    toastr.success('Login successful. Redirecting...', 'Welcome Back');
+                    setTimeout(function() {
+                        window.location.href = data.redirect;
+                    }, 900);
+                }
+            })
+            .catch(error => {
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+                toastr.error('Unable to reach the server. Please try again.', 'Network Error');
+            });
+        });
+        
+        // Room Check Modal functionality
+        if (document.getElementById('checkRoomBtn')) {
+            document.getElementById('checkRoomBtn').addEventListener('click', function() {
+                var checkModal = new bootstrap.Modal(document.getElementById('roomCheckModal'));
+                checkModal.show();
+            });
+        }
+        
+        // Student search form submission
+        document.getElementById('studentSearchForm').addEventListener('submit', function(event) {
+            event.preventDefault();
+            
+            const searchInput = document.getElementById('searchInput').value.trim();
+            if (!searchInput) {
+                toastr.warning('Please enter your matric number, phone number, or parent\'s number', 'Input Required');
+                return;
+            }
+            
+            // Show loading state
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Searching...';
+            submitBtn.disabled = true;
+            
+            // Create form data
+            const formData = new FormData();
+            formData.append('search_query', searchInput);
+            
+            // Search for student room allocation
+            fetch('php/search_room_allocation.php', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+                
+                if (data.success && data.student) {
+                    // Show room details
+                    displayRoomDetails(data.student);
+                } else {
+                    // Show no room found
+                    showNoRoomFound();
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+                showNoRoomFound();
+            });
+        });
+        
+        function esc(s) {
+            return String(s ?? '').replace(/[&<>"']/g, function(c) {
+                return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[c];
+            });
+        }
+
+        function displayRoomDetails(student) {
+            const roomDetails = document.getElementById('roomDetails');
+            roomDetails.innerHTML = `
+                <div class="card">
+                    <div class="card-header bg-success text-white">
+                        <h5 class="mb-0">Room Allocation Details</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <p><strong>Student Name:</strong> ${esc(student.student_name)}</p>
+                                <p><strong>Matric Number:</strong> ${esc(student.matric_no)}</p>
+                                <p><strong>Department:</strong> ${esc(student.department)}</p>
+                                <p><strong>Level:</strong> ${esc(student.level)}</p>
+                            </div>
+                            <div class="col-md-6">
+                                <p><strong>Room/Bunk:</strong> ${esc(student.room_bunk)}</p>
+                                <p><strong>Phone Number:</strong> ${esc(student.student_number)}</p>
+                                <p><strong>Parent Number:</strong> ${esc(student.parent_number)}</p>
+                                <p><strong>Allocation Date:</strong> ${student.created_at ? new Date(student.created_at).toLocaleDateString() : 'N/A'}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Store student data for printing
+            window.currentStudentData = student;
+            
+            // Hide form and show result
+            document.getElementById('roomCheckForm').style.display = 'none';
+            document.getElementById('roomResult').style.display = 'block';
+            document.getElementById('noRoomFound').style.display = 'none';
+        }
+        
+        function showNoRoomFound() {
+            document.getElementById('roomCheckForm').style.display = 'none';
+            document.getElementById('roomResult').style.display = 'none';
+            document.getElementById('noRoomFound').style.display = 'block';
+        }
+        
+        function resetModal() {
+            document.getElementById('roomCheckForm').style.display = 'block';
+            document.getElementById('roomResult').style.display = 'none';
+            document.getElementById('noRoomFound').style.display = 'none';
+            document.getElementById('searchInput').value = '';
+        }
+        
+        // Search again buttons
+        document.getElementById('searchAgainBtn').addEventListener('click', resetModal);
+        document.getElementById('searchAgainBtn2').addEventListener('click', resetModal);
+        
+        // Print allocation slip
+        document.getElementById('printAllocationBtn').addEventListener('click', function() {
+            if (window.currentStudentData) {
+                printAllocationSlip(window.currentStudentData);
+            }
+        });
+        
+        function printAllocationSlip(student) {
+            const printWindow = window.open('', '_blank', 'width=800,height=600');
+            const printContent = `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Room Allocation Slip</title>
+                    <style>
+                        body { font-family: Arial, sans-serif; margin: 20px; }
+                        .header { text-align: center; margin-bottom: 30px; }
+                        .logo { max-width: 100px; }
+                        .title { color: #28a745; margin: 10px 0; }
+                        .details { margin: 20px 0; }
+                        .detail-row { margin: 10px 0; display: flex; }
+                        .detail-label { font-weight: bold; width: 150px; }
+                        .footer { margin-top: 40px; text-align: center; font-size: 12px; color: #666; }
+                        @media print {
+                            body { margin: 0; }
+                            .no-print { display: none; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="header">
+                        <img src="images/paetoa.png" alt="Pa-etos Logo" class="logo">
+                        <h2 class="title">PA-ETOS HOSTEL ACCOMMODATION</h2>
+                        <h3>Room Allocation Slip</h3>
+                    </div>
+                    
+                    <div class="details">
+                        <div class="detail-row">
+                            <span class="detail-label">Student Name:</span>
+                            <span>${student.student_name || 'N/A'}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Matric Number:</span>
+                            <span>${student.matric_no || 'N/A'}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Department:</span>
+                            <span>${student.department || 'N/A'}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Level:</span>
+                            <span>${student.level || 'N/A'}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Room/Bunk:</span>
+                            <span>${student.room_bunk || 'N/A'}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Phone Number:</span>
+                            <span>${student.student_number || 'N/A'}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Parent Number:</span>
+                            <span>${student.parent_number || 'N/A'}</span>
+                        </div>
+                        <div class="detail-row">
+                            <span class="detail-label">Allocation Date:</span>
+                            <span>${student.updated_at ? new Date(student.updated_at).toLocaleDateString() : 'N/A'}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="footer">
+                        <p>This is an official room allocation slip from Pa-etos Hostel Accommodation.</p>
+                        <p>Generated on: ${new Date().toLocaleString()}</p>
+                    </div>
+                    
+                    <div class="no-print" style="text-align: center; margin-top: 20px;">
+                        <button onclick="window.print()" style="padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 5px;">Print</button>
+                        <button onclick="window.close()" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 5px; margin-left: 10px;">Close</button>
+                    </div>
+                </body>
+                </html>
+            `;
+            
+            printWindow.document.write(printContent);
+            printWindow.document.close();
+        }
+        
+        // Reset modal when it's closed
+        document.getElementById('roomCheckModal').addEventListener('hidden.bs.modal', function () {
+            resetModal();
+        });
+    </script>
+</body>
+
+</html>

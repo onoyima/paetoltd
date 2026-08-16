@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <!-- Meta -->
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <!-- Mobile Specific -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- PAGE TITLE HERE -->
+    <title>Pa-etos Hostel Accommodation</title>
+    <!-- Favicon icon -->
+    <link rel="shortcut icon" type="image/png" href="images/paetoa.png">
+    <link href="vendor/bootstrap-select/dist/css/bootstrap-select.min.css" rel="stylesheet">
+    <link class="main-css" href="css/style.css" rel="stylesheet">
+    <link href="vendor/toastr/css/toastr.min.css" rel="stylesheet">
+    <link href="css/auth.css" rel="stylesheet">
+</head>
+
+<body>
+    <div id="preloader">
+        <div class="pt-pre-brand">
+            <img class="pt-pre-logo" src="images/paetoa.png" alt="Pa-etos Logo" width="70" height="70">
+            <div class="pt-spinner"></div>
+        </div>
+    </div>
+
+    <div class="auth-wrapper">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-10 col-md-11">
+                    <div class="auth-card">
+                        <div class="row g-0">
+                            <div class="col-lg-5 d-none d-lg-block">
+                                <div class="auth-aside h-100">
+                                    <div>
+                                        <span class="auth-brand-badge"><i class="fa fa-user-shield"></i> Administrator</span>
+                                        <h2>Admin<br>Sign In</h2>
+                                        <p>Manage student registrations, approve payments, assign rooms and bunks, and keep hostel allocation up to date.</p>
+                                        <ul class="auth-feature-list">
+                                            <li><i class="fa fa-check"></i> Payment confirmation</li>
+                                            <li><i class="fa fa-check"></i> Room & bunk assignment</li>
+                                            <li><i class="fa fa-check"></i> Bulk CSV import</li>
+                                        </ul>
+                                    </div>
+                                    <div class="auth-aside-contact">
+                                        <p><i class="fa fa-phone"></i> +2348033300519</p>
+                                        <p><i class="fa fa-envelope"></i> info@pa-etosltd.com.ng</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-lg-7">
+                                <div class="auth-main">
+                                    <div class="text-center">
+                                        <a href="admin_login.html"><img class="auth-logo" src="images/paetoa.png" alt="Pa-etos Logo"></a>
+                                    </div>
+                                    <h3 class="text-center">Admin Account</h3>
+                                    <p class="auth-subtitle text-center">Sign in to access the management dashboard.</p>
+
+                                    <form id="loginForm" action="php/admin_login.php" method="post">
+                                        <div class="form-group mb-4">
+                                            <label class="auth-form-label" for="email">Email</label>
+                                            <div class="auth-input-group">
+                                                <i class="fa fa-envelope"></i>
+                                                <input type="text" class="form-control" placeholder="Enter email" id="email" name="email" required>
+                                            </div>
+                                        </div>
+                                        <div class="form-group mb-3 position-relative">
+                                            <label class="auth-form-label" for="password">Password</label>
+                                            <div class="auth-input-group">
+                                                <i class="fa fa-lock"></i>
+                                                <input type="password" id="password" name="password" class="form-control" placeholder="Enter password" required>
+                                                <span class="show-pass eye"><i class="fa fa-eye-slash"></i><i class="fa fa-eye"></i></span>
+                                            </div>
+                                        </div>
+                                        <div class="form-check custom-checkbox mb-3">
+                                            <input type="checkbox" class="form-check-input" id="rememberMe" name="rememberMe">
+                                            <label class="form-check-label" for="rememberMe">Remember me</label>
+                                        </div>
+                                        <button type="submit" class="btn btn-primary auth-btn">Sign In</button>
+                                    </form>
+
+                                    <div class="auth-divider"><span>or</span></div>
+
+                                    <p class="auth-footer-note mb-0">Don't have an account? <a href="admin_register.html">Sign up</a></p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+<div class="footer">
+        <div class="copyright">
+            <p>All rights reserved &copy; 2025 <a href="#" target="_blank">BMXCODERS</a></p>
+        </div>
+    </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="vendor/global/global.min.js"></script>
+    <script src="vendor/bootstrap-select/dist/js/bootstrap-select.min.js"></script>
+    <script src="js/custom.min.js"></script>
+    <script src="js/dlabnav-init.js"></script>
+    <script src="js/demo.js"></script>
+    <script src="vendor/toastr/js/toastr.min.js"></script>
+
+    <script>
+        // Toastr global options
+        toastr.options = {
+            closeButton: true,
+            progressBar: true,
+            newestOnTop: true,
+            preventDuplicates: true,
+            positionClass: "toast-top-right",
+            showDuration: 300,
+            hideDuration: 900,
+            timeOut: 5000,
+            extendedTimeOut: 1000,
+            showMethod: "fadeIn",
+            hideMethod: "fadeOut",
+            tapToDismiss: false
+        };
+
+        document.getElementById("loginForm").addEventListener("submit", function(event) {
+            event.preventDefault();
+
+            const submitBtn = this.querySelector('button[type="submit"]');
+            const originalText = submitBtn.textContent;
+            submitBtn.textContent = 'Signing in...';
+            submitBtn.disabled = true;
+
+            let formData = new FormData(this);
+
+            fetch('php/admin_login.php', {
+                method: 'POST',
+                body: formData,
+                redirect: 'manual'
+            })
+            .then(function(response) {
+                if (response.type === 'opaqueredirect' || response.status >= 300 && response.status < 400) {
+                    toastr.success('Login successful. Redirecting...', 'Welcome Back');
+                    setTimeout(function() {
+                        window.location.href = 'admin-dashboard.php';
+                    }, 900);
+                    return null;
+                }
+                return response.text();
+            })
+            .then(function(text) {
+                if (text === null) return; // handled redirect above
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+                var message = text.replace(/^Error:\s*/i, '').trim();
+                toastr.error(message || 'Invalid credentials. Please try again.', 'Login Failed');
+            })
+            .catch(function(error) {
+                submitBtn.textContent = originalText;
+                submitBtn.disabled = false;
+                toastr.error('Unable to reach the server. Please try again.', 'Network Error');
+            });
+        });
+    </script>
+
+</body>
+
+</html>
