@@ -129,16 +129,22 @@ $pageHeader = 'Assign Room';
 							<li class="nav-item" role="presentation">
 								<a class="nav-link active pt-assign-tab" id="assign-hostel-all-tab" href="#" role="tab" aria-selected="true" data-hostel-id="0">All Hostels</a>
 							</li>
-							<?php foreach ($hostels as $h): $color = pt_hostel_color($hostelColors, (int)$h['id']); ?>
-								<li class="nav-item" role="presentation">
-									<a class="nav-link pt-assign-tab" id="assign-hostel-<?php echo (int)$h['id']; ?>-tab" href="#" role="tab" aria-selected="false" data-hostel-id="<?php echo (int)$h['id']; ?>" style="border:1px solid <?php echo $color; ?>;color:<?php echo $color; ?>;">
-										<i class="fas fa-building me-1"></i><?php echo htmlspecialchars($h['name']); ?>
-									</a>
-								</li>
-							<?php endforeach; ?>
-						</ul>
+						<?php foreach ($hostels as $h): $color = pt_hostel_color($hostelColors, (int)$h['id']); ?>
+							<li class="nav-item" role="presentation">
+								<a class="nav-link pt-assign-tab" id="assign-hostel-<?php echo (int)$h['id']; ?>-tab" href="#" role="tab" aria-selected="false" data-hostel-id="<?php echo (int)$h['id']; ?>" style="border:1px solid <?php echo $color; ?>;color:<?php echo $color; ?>;">
+									<i class="fas fa-building me-1"></i><?php echo htmlspecialchars($h['name']); ?>
+								</a>
+							</li>
+						<?php endforeach; ?>
+						<li class="nav-item" role="presentation">
+							<a class="nav-link pt-assign-tab" id="manageUploadsTab" href="#" role="tab" aria-selected="false" data-mode="uploads">
+								<i class="fas fa-list-alt me-1"></i>Manage Uploads
+							</a>
+						</li>
+					</ul>
 
-						<!-- Search & filter toolbar -->
+					<!-- Search & filter toolbar -->
+					<div class="pt-assign-view" id="pt-assign-view">
 						<div class="row mt-3 g-2">
 							<div class="col-md-3 col-sm-6">
 								<input type="text" class="form-control form-control-sm" id="searchName" placeholder="Name">
@@ -197,6 +203,54 @@ $pageHeader = 'Assign Room';
 							</table>
 						</div>
 					</div>
+
+					<!-- Manage Uploads panel: pick hostel + session, review uploaded
+					     batches and delete (revoke) one so it can be re-uploaded. -->
+					<div class="pt-manage-uploads d-none mt-3" id="pt-manage-uploads">
+						<div class="row g-2 align-items-end mb-3">
+							<div class="col-md-4 col-sm-6">
+								<label class="form-label small text-muted mb-1" for="manageSession">Academic Session</label>
+								<select id="manageSession" class="form-select form-select-sm">
+									<?php foreach ($sessions as $s): ?>
+										<option value="<?php echo (int)$s['id']; ?>" <?php echo !empty($s['is_active']) ? 'selected' : ''; ?>>
+											<?php echo htmlspecialchars($s['name']); ?><?php echo !empty($s['is_active']) ? ' (Active)' : ''; ?>
+										</option>
+									<?php endforeach; ?>
+								</select>
+							</div>
+							<div class="col-md-4 col-sm-6">
+								<label class="form-label small text-muted mb-1" for="manageHostel">Hostel</label>
+								<select id="manageHostel" class="form-select form-select-sm">
+									<?php foreach ($hostels as $h): ?>
+										<option value="<?php echo (int)$h['id']; ?>"><?php echo htmlspecialchars($h['name']); ?></option>
+									<?php endforeach; ?>
+								</select>
+							</div>
+							<div class="col-md-4 col-sm-12">
+								<button type="button" class="btn btn-sm btn-primary w-100" id="loadBatchesBtn">
+									<i class="fas fa-sync-alt me-1"></i>Load Uploads
+								</button>
+							</div>
+						</div>
+						<div class="table-responsive">
+							<table class="table table-striped table-hover mb-0" id="uploadBatchTable">
+								<thead>
+									<tr>
+										<th>Upload</th>
+										<th>File Name</th>
+										<th>Rows</th>
+										<th>Errors</th>
+										<th>Uploaded By</th>
+										<th>Uploaded At</th>
+										<th>Action</th>
+									</tr>
+								</thead>
+								<tbody></tbody>
+							</table>
+						</div>
+						<div class="text-muted small mt-2" id="batchEmptyHint"></div>
+					</div>
+					</div>
 				</div>
 			</div>
 		</div>
@@ -226,16 +280,16 @@ $pageHeader = 'Assign Room';
 							<?php endforeach; ?>
 						</select>
 					</div>
-					<div class="form-group mt-3">
-						<label for="sessionSelector">Academic Session</label>
-						<select id="sessionSelector" name="session_id" class="default-select form-control" required>
-							<?php foreach ($sessions as $s): ?>
-								<option value="<?php echo (int)$s['id']; ?>" <?php echo !empty($s['is_active']) ? 'selected' : ''; ?>>
-									<?php echo htmlspecialchars($s['name']); ?><?php echo !empty($s['is_active']) ? ' (Active)' : ''; ?>
-								</option>
-							<?php endforeach; ?>
-						</select>
-					</div>
+				<div class="form-group mt-3">
+					<label for="sessionSelector">Academic Session</label>
+					<select id="sessionSelector" name="session_id" class="default-select form-control" required>
+						<?php foreach ($sessions as $s): ?>
+							<option value="<?php echo (int)$s['id']; ?>" <?php echo !empty($s['is_active']) ? 'selected' : ''; ?>>
+								<?php echo htmlspecialchars($s['name']); ?><?php echo !empty($s['is_active']) ? ' (Active)' : ''; ?>
+							</option>
+						<?php endforeach; ?>
+					</select>
+				</div>
 					<div class="alert alert-info mt-3 mb-0">
 						<p>CSV file should have the following columns (8 columns total):</p>
 						<ol>
@@ -392,6 +446,7 @@ $pageHeader = 'Assign Room';
 		var doInit = function () {
 			var $t = $('#userTable');
 			if (!$t.length) return;
+			if (jQuery.fn.DataTable.isDataTable($t)) { $t.DataTable().destroy(); }
 			ptRoomTable = $t.DataTable({
 				pageLength: 10,
 				lengthMenu: [5, 10, 25, 50],
@@ -405,7 +460,11 @@ $pageHeader = 'Assign Room';
 					search: '',
 					searchPlaceholder: 'Search...',
 					lengthMenu: '_MENU_',
-					zeroRecords: 'No assigned rooms found.'
+					zeroRecords: 'No assigned rooms found.',
+					paginate: {
+						next: '<i class="fa fa-angle-double-right" aria-hidden="true"></i>',
+						previous: '<i class="fa fa-angle-double-left" aria-hidden="true"></i>'
+					}
 				}
 			});
 			applyColumnFilters();
@@ -652,6 +711,8 @@ $pageHeader = 'Assign Room';
 	function openCsvModal() {
 		if (currentHostelId > 0) {
 			$('#hostelSelector').val(String(currentHostelId));
+		} else if (ptHostelList.length) {
+			$('#hostelSelector').val(String(ptHostelList[0].id));
 		} else {
 			$('#hostelSelector').val('0');
 		}
@@ -676,6 +737,7 @@ $pageHeader = 'Assign Room';
 					if (window.PT) { PT.success(response.message); }
 					bootstrap.Modal.getInstance(document.getElementById('csvUploadModal'))?.hide();
 					fetchAssignedRooms();
+					if (!$('#pt-manage-uploads').hasClass('d-none')) { loadUploadBatches(); }
 				} else {
 					var errorMsg = response.message;
 					if (response.errors && response.errors.length > 0) {
@@ -702,6 +764,117 @@ $pageHeader = 'Assign Room';
 		document.body.removeChild(link);
 	}
 
+	function showManageUploads() {
+		$('#pt-assign-view').addClass('d-none');
+		$('#pt-manage-uploads').removeClass('d-none');
+		$('#manageSession').val(String(ptGetSessionId() || 0));
+		var h = currentHostelId > 0 ? currentHostelId : (ptHostelList.length ? ptHostelList[0].id : 0);
+		$('#manageHostel').val(String(h));
+		loadUploadBatches();
+	}
+
+	function showAssignView() {
+		$('#pt-manage-uploads').addClass('d-none');
+		$('#pt-assign-view').removeClass('d-none');
+	}
+
+	function loadUploadBatches() {
+		var sess = $('#manageSession').val();
+		var h = $('#manageHostel').val();
+		var wrap = $('#uploadBatchTable').closest('.table-responsive')[0];
+		if (window.PT && wrap) { PT.tableLoading(wrap, true); }
+		if (!sess || !h) {
+			if (window.PT && wrap) { PT.tableLoading(wrap, false); }
+			renderBatches([]);
+			return;
+		}
+		$.ajax({
+			url: 'php/fetch_upload_batches.php',
+			dataType: 'json',
+			data: { session_id: sess, hostel_id: h },
+			success: function (data) {
+				if (window.PT && wrap) { PT.tableLoading(wrap, false); }
+				if (!data || data.status !== 'success') {
+					if (window.PT) { PT.error((data && data.message) ? data.message : 'Could not load upload batches.'); }
+					return;
+				}
+				renderBatches(data.batches || []);
+			},
+			error: function () {
+				if (window.PT && wrap) { PT.tableLoading(wrap, false); }
+				if (window.PT) { PT.error('Could not load upload batches. Please try again.'); }
+			}
+		});
+	}
+
+	function renderBatches(batches) {
+		var tbody = $('#uploadBatchTable tbody').empty();
+		if (!batches.length) {
+			$('#batchEmptyHint').text('No uploads found for the selected session and hostel.');
+			return;
+		}
+		$('#batchEmptyHint').text('');
+		batches.forEach(function (b) {
+			var label = b.legacy
+				? 'Earlier uploads (no file record)'
+				: (b.file_name ? b.file_name : 'Upload #' + b.id);
+			var uploadedBy = b.legacy ? '&mdash;' : esc(b.uploaded_by_name || '&mdash;');
+			var uploadedAt = b.legacy ? '&mdash;' : esc(b.created_at);
+			var confirmMsg = b.legacy
+				? 'Delete all earlier uploaded data for this hostel and session (' + b.total_rows + ' rows)? This removes the room assignments and reservations it created so you can re-upload a corrected file.'
+				: 'Delete this upload (' + b.total_rows + ' rows)? This removes the room assignments and reservations it created so you can re-upload a corrected file.';
+			var row = `
+				<tr>
+					<td>${b.legacy ? '<span class="badge bg-warning text-dark">Earlier</span>' : '<span class="badge bg-success">File</span>'}</td>
+					<td>${esc(label)}</td>
+					<td>${esc(b.total_rows)}</td>
+					<td>${b.error_rows ? '<span class="text-danger">' + esc(b.error_rows) + '</span>' : '0'}</td>
+					<td>${uploadedBy}</td>
+					<td>${uploadedAt}</td>
+					<td class="text-center text-nowrap">
+						<button class="btn btn-danger btn-sm px-2 delete-batch-btn" title="Delete this upload"
+							data-id="${esc(b.id)}" data-legacy="${b.legacy ? '1' : '0'}" data-rows="${esc(b.total_rows)}" data-confirm="${esc(confirmMsg)}"><i class="fas fa-trash-alt"></i></button>
+					</td>
+				</tr>
+			`;
+			tbody.append(row);
+		});
+	}
+
+	function deleteUploadBatch() {
+		var btn = $(this);
+		var id = btn.data('id');
+		var legacy = btn.data('legacy') === 1;
+		var rows = btn.data('rows');
+		var confirmMsg = btn.data('confirm') || 'Delete this uploaded data? This cannot be undone.';
+		openConfirmModal('Delete Uploaded Data', confirmMsg, function () {
+			var payload = { batch_id: id };
+			if (legacy) {
+				payload.hostel_id = $('#manageHostel').val();
+				payload.session_id = $('#manageSession').val();
+			}
+			$.ajax({
+				url: 'php/delete_upload_batch.php',
+				type: 'POST',
+				data: payload,
+				dataType: 'json',
+				success: function (response) {
+					if (response.status === 'success') {
+						if (window.PT) { PT.success(response.message); }
+						loadUploadBatches();
+						fetchAssignedRooms();
+						loadStats(ptGetSessionId());
+					} else {
+						if (window.PT) { PT.error('Error: ' + response.message); }
+					}
+				},
+				error: function () {
+					if (window.PT) { PT.error('An error occurred. Please try again.'); }
+				}
+			});
+		});
+	}
+
 	function printTable() {
 		var rows = getFilteredUsers();
 		var rowsHtml = rows.map(function (u, i) {
@@ -718,14 +891,19 @@ $pageHeader = 'Assign Room';
 	}
 
 	function ptSetupAssignRoom() {
-		// Hostel tabs (manual pill switching; refetches data per hostel)
-		$('#assignHostelTabs').on('click', '.pt-assign-tab', function (e) {
-			e.preventDefault();
-			$('#assignHostelTabs .pt-assign-tab').removeClass('active');
-			$(this).addClass('active');
+	// Hostel tabs (manual pill switching; refetches data per hostel)
+	$('#assignHostelTabs').on('click', '.pt-assign-tab', function (e) {
+		e.preventDefault();
+		$('#assignHostelTabs .pt-assign-tab').removeClass('active');
+		$(this).addClass('active');
+		if ($(this).data('mode') === 'uploads') {
+			showManageUploads();
+		} else {
+			showAssignView();
 			currentHostelId = parseInt($(this).data('hostelId'), 10) || 0;
 			fetchAssignedRooms();
-		});
+		}
+	});
 
 		// Session selector
 		$('#assignSessionSelector').on('change', function () {
@@ -776,6 +954,11 @@ $pageHeader = 'Assign Room';
 			bootstrap.Modal.getOrCreateInstance(document.getElementById('ptConfirmModal')).hide();
 			if (action) { action(); }
 		});
+
+		// Manage Uploads tab
+		$('#loadBatchesBtn').on('click', loadUploadBatches);
+		$('#manageSession, #manageHostel').on('change', loadUploadBatches);
+		$('#uploadBatchTable').on('click', '.delete-batch-btn', deleteUploadBatch);
 
 		fetchAssignedRooms();
 	}

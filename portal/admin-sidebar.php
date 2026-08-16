@@ -195,14 +195,6 @@ include 'php/fetch_admin_info.php'; // Include file to fetch admin info
 
 						</li>
 					<?php endif; ?>
-					<?php if (pt_can('view_hostel')): ?>
-						<li><a class="" href="manage-hostel.php#view_room" data-pt-nav aria-expanded="false">
-								<i class="flaticon-046-home"></i>
-								<span class="nav-text"> View Hostel</span>
-							</a>
-
-						</li>
-					<?php endif; ?>
 					<?php if (pt_can('manage_session')): ?>
 						<li><a class="" href="manage-session.php" data-pt-nav aria-expanded="false">
 								<i class="fas fa-calendar-alt"></i>

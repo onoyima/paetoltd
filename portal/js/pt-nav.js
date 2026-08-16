@@ -218,6 +218,30 @@
     });
   }
 
+  /* Modals live OUTSIDE .content-body (after the page-titles row), so a content
+     swap alone would drop them. Reconcile the shell's modals with the fetched
+     page's modals (replace by id, remove stale ones, clear orphaned backdrops)
+     so upload/update/confirm dialogs keep working after AJAX navigation. */
+  function syncModals(doc) {
+    var body = document.body;
+    var wanted = {};
+    doc.body.querySelectorAll('.modal').forEach(function (m) {
+      wanted[m.id || ('modal-' + Math.random().toString(36).slice(2))] = m;
+    });
+    Array.prototype.forEach.call(body.querySelectorAll('.modal'), function (m) {
+      if (!wanted[m.id]) m.parentNode.removeChild(m);
+    });
+    Object.keys(wanted).forEach(function (id) {
+      var m = wanted[id];
+      var cur = document.getElementById(id);
+      if (cur) cur.parentNode.replaceChild(m, cur);
+      else body.appendChild(m);
+    });
+    Array.prototype.forEach.call(body.querySelectorAll('.modal-backdrop'), function (b) {
+      b.parentNode.removeChild(b);
+    });
+  }
+
   function swapContent(content, doc, href) {
     var host = document.getElementById('pt-content');
     if (!host) { window.location.href = href; return; }
@@ -225,6 +249,7 @@
     var url = new URL(href, window.location.href);
     syncStyles(doc);
     host.innerHTML = content.innerHTML;
+    syncModals(doc);
     host.classList.remove('pt-swapped');
     void host.offsetWidth;
     host.classList.add('pt-swapped');

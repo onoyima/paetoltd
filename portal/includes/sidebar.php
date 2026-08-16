@@ -66,14 +66,6 @@
 
 				</li>
 			<?php endif; ?>
-			<?php if (pt_can('view_hostel')): ?>
-				<li><a class="" href="manage-hostel.php#view_room" aria-expanded="false">
-						<i class="fas fa-eye"></i>
-						<span class="nav-text"> View Hostel</span>
-					</a>
-
-				</li>
-			<?php endif; ?>
 			<?php if (pt_can('manage_session')): ?>
 				<li><a class="" href="manage-session.php" aria-expanded="false">
 						<i class="fas fa-calendar-alt"></i>

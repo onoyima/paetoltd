@@ -527,6 +527,9 @@ $pageHeader = 'Manage Hostel';
 		].forEach(function (spec) {
 			var $t = $(spec.sel);
 			if (!$t.length) return;
+			// Destroy any stale instance first so PTNav swaps never hit the
+			// "Cannot reinitialise DataTable" warning.
+			if (jQuery.fn.DataTable.isDataTable($t)) { $t.DataTable().destroy(); }
 			$t.DataTable({
 				pageLength: 10,
 				lengthMenu: [5, 10, 25, 50],
@@ -540,7 +543,11 @@ $pageHeader = 'Manage Hostel';
 					search: '',
 					searchPlaceholder: 'Search...',
 					lengthMenu: '_MENU_',
-					zeroRecords: spec.zeroRecords
+					zeroRecords: spec.zeroRecords,
+					paginate: {
+						next: '<i class="fa fa-angle-double-right" aria-hidden="true"></i>',
+						previous: '<i class="fa fa-angle-double-left" aria-hidden="true"></i>'
+					}
 				}
 			});
 		});

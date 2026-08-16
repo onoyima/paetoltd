@@ -107,6 +107,19 @@ try {
 
     $conn->begin_transaction();
 
+    // Create the upload batch record first so every row imported by this file
+    // can be tagged with it (and later revoked together if the upload was wrong).
+    $adminId = isset($_SESSION['user_id']) ? intval($_SESSION['user_id']) : 0;
+    $batchStmt = $conn->prepare("INSERT INTO upload_batch (hostel_id, session_id, file_name, total_rows, error_rows, uploaded_by, created_at) VALUES (?, ?, ?, 0, 0, ?, NOW())");
+    $fileName = basename((string)$file['name']);
+    $batchStmt->bind_param('iisi', $hostelId, $sessionId, $fileName, $adminId);
+    if (!$batchStmt->execute()) {
+        $batchStmt->close();
+        throw new Exception('Failed to create upload batch record: ' . $batchStmt->error);
+    }
+    $uploadBatchId = $batchStmt->insert_id;
+    $batchStmt->close();
+
     while (($row = fgetcsv($csvFile)) !== FALSE) {
         if ($hasNamedCols) {
             $get = function ($key) use ($row, $colMap) {
@@ -169,8 +182,8 @@ try {
 
         $upsertStmt = $conn->prepare("
             INSERT INTO assign_room 
-                (sn, hostel_id, student_name, matric_no, department, parent_number, level, student_number, room_bunk, bed_space, session_id, created_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
+                (sn, hostel_id, student_name, matric_no, department, parent_number, level, student_number, room_bunk, bed_space, session_id, upload_batch_id, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), NOW())
             ON DUPLICATE KEY UPDATE
                 hostel_id = VALUES(hostel_id),
                 student_name = VALUES(student_name),
@@ -179,9 +192,10 @@ try {
                 level = VALUES(level),
                 student_number = VALUES(student_number),
                 bed_space = VALUES(bed_space),
+                upload_batch_id = VALUES(upload_batch_id),
                 updated_at = NOW()
         ");
-        $upsertStmt->bind_param("iissssssssi", $nextSn, $hostelId, $student_name, $matric_no, $department, $parent_number, $level, $student_number, $room_bunk, $bed_space, $sessionId);
+        $upsertStmt->bind_param("iissssssssii", $nextSn, $hostelId, $student_name, $matric_no, $department, $parent_number, $level, $student_number, $room_bunk, $bed_space, $sessionId, $uploadBatchId);
         
         if (!$upsertStmt->execute()) {
             $errorCount++;
@@ -206,15 +220,16 @@ try {
             // If a reservation already exists from a portal assignment (room_id set),
             // the room_bunk is still recorded but the room link is preserved.
             $resStmt = $conn->prepare("
-                INSERT INTO reservations (user_id, session_id, hostel_id, room_bunk, bed_space, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, NOW(), NOW())
+                INSERT INTO reservations (user_id, session_id, hostel_id, room_bunk, bed_space, upload_batch_id, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, NOW(), NOW())
                 ON DUPLICATE KEY UPDATE
                     hostel_id = VALUES(hostel_id),
                     room_bunk = VALUES(room_bunk),
                     bed_space = VALUES(bed_space),
+                    upload_batch_id = VALUES(upload_batch_id),
                     updated_at = NOW()
             ");
-            $resStmt->bind_param("iiiss", $user['id'], $sessionId, $hostelId, $room_bunk, $bed_space);
+            $resStmt->bind_param("iiissi", $user['id'], $sessionId, $hostelId, $room_bunk, $bed_space, $uploadBatchId);
             
             if (!$resStmt->execute()) {
                 $errorCount++;
@@ -231,16 +246,24 @@ try {
     }
 
     fclose($csvFile);
-    $conn->commit();
+
+    // Finalize the batch record with the actual import/error counts.
+    $finBatch = $conn->prepare("UPDATE upload_batch SET total_rows = ?, error_rows = ? WHERE id = ?");
+    $finBatch->bind_param('iii', $importCount, $errorCount, $uploadBatchId);
+    $finBatch->execute();
+    $finBatch->close();
 
     if ($importCount > 0) {
+        $conn->commit();
         $response['status'] = 'success';
         $response['message'] = "$importCount records imported successfully for hostel $hostelId.";
+        $response['batch_id'] = $uploadBatchId;
         if ($errorCount > 0) {
             $response['message'] .= " $errorCount records failed.";
             $response['errors'] = $errors;
         }
     } else {
+        $conn->rollback();
         throw new Exception('No records were imported. Please check your CSV file.');
     }
 

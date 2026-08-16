@@ -136,7 +136,6 @@ $pageHeader = 'Dashboard';
 	</div>
 </div>
 
-<script src="vendor/datatables/js/jquery.dataTables.min.js"></script>
 <script>
 	function esc(s) {
 		return String(s ?? '').replace(/[&<>"']/g, function (c) {
@@ -301,17 +300,43 @@ $pageHeader = 'Dashboard';
 		}
 	}
 
-	// Client-side pagination/search for the payments table (DataTables lib is already loaded on this page)
-	if (window.jQuery && jQuery.fn && jQuery.fn.DataTable) {
-		var dtEl = document.getElementById('example5');
-		if (dtEl && !jQuery.fn.DataTable.isDataTable(dtEl)) {
+	// Client-side pagination/search for the payments table.
+	// DataTables may be missing from the current jQuery instance after PTNav
+	// swaps (the shell's global.min.js bundles its own jQuery), so load it on
+	// demand and always destroy a stale instance before re-initialising.
+	function initPaymentsTable() {
+		if (!window.jQuery || !jQuery.fn) return;
+		var doInit = function () {
+			var $t = jQuery('#example5');
+			if (!$t.length) return;
+			if (jQuery.fn.DataTable.isDataTable($t)) { $t.DataTable().destroy(); }
 			jQuery('#example5').DataTable({
 				pageLength: 25,
 				lengthMenu: [10, 25, 50, 100],
-				order: [[0, 'asc']]
+				order: [[0, 'asc']],
+				language: {
+					search: '',
+					searchPlaceholder: 'Search payments...',
+					lengthMenu: '_MENU_',
+					paginate: {
+						next: '<i class="fa fa-angle-double-right" aria-hidden="true"></i>',
+						previous: '<i class="fa fa-angle-double-left" aria-hidden="true"></i>'
+					}
+				}
 			});
+		};
+		if (!jQuery.fn.DataTable) {
+			var s = document.createElement('script');
+			s.src = 'vendor/datatables/js/jquery.dataTables.min.js';
+			s.onload = doInit;
+			s.onerror = function () { /* plain table still shows */ };
+			document.body.appendChild(s);
+			return;
 		}
+		doInit();
 	}
+
+	if (window.jQuery) { initPaymentsTable(); }
 </script>
 
 </div>

@@ -1,4 +1,4 @@
 Student Name,Matric No,Department,Parent Number,Level,Student Number,Room Bunk
-John Doe,MAT/2024/001,Computer Science,08012345678,300,09087654321,Block A - Room 101 - Bunk 1
-Jane Smith,MAT/2024/002,Electrical Engineering,08023456789,200,09076543210,Block B - Room 202 - Bunk 2
-Michael Johnson,MAT/2024/003,Mechanical Engineering,08034567890,400,09065432109,Block C - Room 303 - Bunk 3
+John Doe,MAT/2024/001,Computer Science,08012345678,300,09087654321,Block A - ROOM 101-1D - Bunk 1 Down
+Jane Smith,MAT/2024/002,Electrical Engineering,08023456789,200,09076543210,Block B - Room 202-2B - Bunk 2
+Michael Johnson,MAT/2024/003,Mechanical Engineering,08034567890,400,09065432109,Block C - Room 303-3U - Bunk 3 Up
