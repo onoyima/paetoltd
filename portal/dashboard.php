@@ -349,8 +349,8 @@ switch ($status_key) {
 														<span
 															class="text-primary d-block mb-xl-3 mb-1"><?php echo htmlspecialchars($students_info['regNo'] ?? 'Guest'); ?>
 														</span>
-														<span><i class="fas fa-map-marker-alt me-1"></i>No. 232 Alvan
-															street Kuje</span>
+														<span><i
+																class="fas fa-map-marker-alt me-1"><?php echo htmlspecialchars($students_info['department'] ?? 'Guest'); ?></i></span>
 													</div>
 												</div>
 											</div>
@@ -395,7 +395,8 @@ switch ($status_key) {
 											</h3>
 											<h3 class="">Email:
 												<span><?php echo htmlspecialchars($students_info['email'] ?? ''); ?>
-												</span></h3>
+												</span>
+											</h3>
 										</div>
 
 									</div>
