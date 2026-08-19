@@ -209,11 +209,6 @@ if ($selectedHostel) {
 								</a>
 							</li>
 						<?php endforeach; ?>
-						<li class="nav-item" role="presentation">
-							<a class="nav-link pt-assign-tab" id="manageUploadsTab" href="#" role="tab" aria-selected="false" data-mode="uploads">
-								<i class="fas fa-list-alt me-1"></i>Manage Uploads
-							</a>
-						</li>
 					</ul>
 
 					<!-- Search & filter toolbar -->
@@ -247,12 +242,11 @@ if ($selectedHostel) {
 
 						<div class="card-footer px-0 pt-3 pb-0 d-flex flex-wrap gap-2 bg-transparent border-0">
 							<button id="downloadCSV" class="btn btn-primary btn-sm"><i class="fas fa-download me-1"></i>Download CSV</button>
+							<button id="downloadCSVTemplate" class="btn btn-primary btn-sm"><i class="fas fa-file-csv me-1"></i>CSV Template</button>
 							<button id="downloadFilteredExcel" class="btn btn-warning btn-sm"><i class="fas fa-file-excel me-1"></i>Download Filtered Excel</button>
 							<button id="printTable" class="btn btn-secondary btn-sm"><i class="fas fa-print me-1"></i>Print Table</button>
 							<button id="uploadCSVBtn" class="btn btn-success btn-sm"><i class="fas fa-upload me-1"></i>Upload CSV</button>
-							<button id="downloadCSV" class="btn btn-primary btn-sm"><i class="fas fa-download me-1"></i>CSV Template</button>
-
-							<!-- <button id="downloadCSVTemplate" class="btn btn-info btn-sm"><i class="fas fa-file-csv me-1"></i>Download CSV Template</button> -->
+							<button id="manageUploadsBtn" class="btn btn-info btn-sm"><i class="fas fa-list-alt me-1"></i>Manage Uploads</button>
 						</div>
 
 						<div class="table-responsive pt-table-wrap mt-2">
@@ -282,6 +276,11 @@ if ($selectedHostel) {
 					<!-- Manage Uploads panel: pick hostel + session, review uploaded
 					     batches and delete (revoke) one so it can be re-uploaded. -->
 					<div class="pt-manage-uploads d-none mt-3" id="pt-manage-uploads">
+						<div class="mb-3">
+							<button type="button" class="btn btn-sm btn-outline-secondary" id="backToAssignBtn">
+								<i class="fas fa-arrow-left me-1"></i>Back to Room Assignments
+							</button>
+						</div>
 						<div class="row g-2 align-items-end mb-3">
 							<div class="col-md-4 col-sm-6">
 								<label class="form-label small text-muted mb-1" for="manageSession">Academic Session</label>
@@ -845,19 +844,12 @@ if ($selectedHostel) {
 		});
 	}
 
-	function downloadCSVTemplate() {
-		var headers = ['Student Name', 'Matric No', 'Department', 'Parent Number', 'Level', 'Student Number', 'Room Bunk', 'Bed Space'];
-		var csvString = headers.join(',') + '\n';
-		var blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
-		var link = document.createElement("a");
-		var url = URL.createObjectURL(blob);
-		link.setAttribute("href", url);
-		link.setAttribute("download", 'room_assignment_template_hostel_' + (currentHostelId || 0) + '.csv');
-		link.style.display = 'none';
-		document.body.appendChild(link);
-		link.click();
-		document.body.removeChild(link);
-		URL.revokeObjectURL(url);
+	function toggleDownloadCSV() {
+		if (currentHostelId > 0) {
+			$('#downloadCSV, #downloadCSVTemplate').show();
+		} else {
+			$('#downloadCSV, #downloadCSVTemplate').hide();
+		}
 	}
 
 	function showManageUploads() {
@@ -997,6 +989,7 @@ if ($selectedHostel) {
 		} else {
 			showAssignView();
 			currentHostelId = parseInt($(this).data('hostelId'), 10) || 0;
+			toggleDownloadCSV();
 			fetchAssignedRooms();
 		}
 	});
@@ -1015,8 +1008,13 @@ if ($selectedHostel) {
 		$('#saveStudentChanges').on('click', saveStudentChanges);
 		$('#submitCSV').on('click', submitCsv);
 		$('#uploadCSVBtn').on('click', openCsvModal);
+		$('#manageUploadsBtn').on('click', showManageUploads);
+		$('#backToAssignBtn').on('click', showAssignView);
 		$('#downloadCSV').on('click', function () {
 			downloadCsvFile(buildCsv(getFilteredUsers()), 'assigned_rooms.csv');
+		});
+		$('#downloadCSVTemplate').on('click', function () {
+			downloadCsvFile(buildCsv(getFilteredUsers()), 'assigned_rooms_template.csv');
 		});
 		$('#downloadFilteredExcel').on('click', function () {
 			var rows = getFilteredUsers();
@@ -1027,7 +1025,6 @@ if ($selectedHostel) {
 			downloadCsvFile('\uFEFF' + buildCsv(rows), 'assigned_rooms_filtered.csv');
 		});
 		$('#printTable').on('click', printTable);
-		$('#downloadCSVTemplate').on('click', downloadCSVTemplate);
 		$('#clearFilters').on('click', function () {
 			$('#searchName, #searchMatric, #searchDepartment, #searchLevel, #searchStudentNumber, #searchRoomBunk, #searchBedSpace').val('');
 			applyColumnFilters();
@@ -1054,6 +1051,7 @@ if ($selectedHostel) {
 		$('#manageSession, #manageHostel').on('change', loadUploadBatches);
 		$('#uploadBatchTable').on('click', '.delete-batch-btn', deleteUploadBatch);
 
+		toggleDownloadCSV();
 		fetchAssignedRooms();
 	}
 

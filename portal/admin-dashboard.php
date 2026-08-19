@@ -14,7 +14,6 @@ $sessionId = pt_active_session_id();
 // ---- Stats (computed server-side: single page render, no per-card AJAX) ----
 $userCount = 0;
 $hostelCount = 0;
-$roomCount = 0;
 $categoryCount = 0;
 $totalTaken = 0;
 $totalAvailable = 0;
@@ -34,18 +33,6 @@ if (isset($conn)) {
 	$r = $conn->query("SELECT COUNT(*) c FROM room_category");
 	if ($r) {
 		$categoryCount = (int) $r->fetch_assoc()['c'];
-	}
-
-	// Count distinct room names from assign_room for the active session.
-	// "ROOM 101-1D" and "ROOM 101-2U" both map to "ROOM 101" → 1 room.
-	if ($sessionId > 0) {
-		$st = $conn->prepare("SELECT COUNT(DISTINCT SUBSTRING_INDEX(room_bunk, '-', 1)) c FROM assign_room WHERE session_id = ?");
-		if ($st) {
-			$st->bind_param('i', $sessionId);
-			$st->execute();
-			$roomCount = (int) $st->get_result()->fetch_assoc()['c'];
-			$st->close();
-		}
 	}
 
 	// Taken (student_name NOT NULL) vs Available (student_name IS NULL) per session
@@ -69,6 +56,7 @@ if (isset($conn)) {
 				'name' => $h['name'],
 				'taken' => 0,
 				'available' => 0,
+				'rooms' => 0,
 			);
 		}
 	}
@@ -84,6 +72,23 @@ if (isset($conn)) {
 				if (isset($perHostel[$hid])) {
 					$perHostel[$hid]['taken'] = (int) $row['taken'];
 					$perHostel[$hid]['available'] = (int) $row['available'];
+				}
+			}
+			$st->close();
+		}
+	}
+
+	// Count distinct room names per hostel (after perHostel is initialized)
+	if ($sessionId > 0) {
+		$st = $conn->prepare("SELECT hostel_id, COUNT(DISTINCT SUBSTRING_INDEX(room_bunk, '-', 1)) AS c FROM assign_room WHERE session_id = ? GROUP BY hostel_id");
+		if ($st) {
+			$st->bind_param('i', $sessionId);
+			$st->execute();
+			$ar = $st->get_result();
+			while ($row = $ar->fetch_assoc()) {
+				$hid = (int) $row['hostel_id'];
+				if (isset($perHostel[$hid])) {
+					$perHostel[$hid]['rooms'] = (int) $row['c'];
 				}
 			}
 			$st->close();
@@ -181,16 +186,18 @@ $pageHeader = 'Dashboard';
 										<p class="mb-0">Hostels</p>
 									</div>
 								</div>
+								<?php foreach ($perHostel as $hid => $h): ?>
 								<div class="col-xl-2 col-lg-4 col-sm-6 col-6">
 									<div class="static-icon">
 										<span>
 											<i class="fas fa-door-open"></i>
 										</span>
-										<h3 class="count mb-0"><?php echo $roomCount; ?></h3>
-										<p class="mb-0">Rooms</p>
+										<h3 class="count mb-0"><?php echo $h['rooms']; ?></h3>
+										<p class="mb-0"><?php echo htmlspecialchars($h['name']); ?> Rooms</p>
 									</div>
 								</div>
-								<div class="col-xl-2 col-lg-4 col-sm-6 col-6">
+								<?php endforeach; ?>
+								<!-- <div class="col-xl-2 col-lg-4 col-sm-6 col-6">
 									<div class="static-icon">
 										<span>
 											<i class="fas fa-tags"></i>
@@ -198,7 +205,7 @@ $pageHeader = 'Dashboard';
 										<h3 class="count mb-0"><?php echo $categoryCount; ?></h3>
 										<p class="mb-0">Room Categories</p>
 									</div>
-								</div>
+								</div> -->
 								<?php foreach ($perHostel as $hid => $h): ?>
 								<div class="col-xl-2 col-lg-4 col-sm-6 col-6">
 									<div class="static-icon">
@@ -206,7 +213,7 @@ $pageHeader = 'Dashboard';
 											<i class="fas fa-bed"></i>
 										</span>
 										<h3 class="count mb-0"><?php echo $h['taken'] . ' / ' . $h['available']; ?></h3>
-										<p class="mb-0"><?php echo htmlspecialchars($h['name']); ?></p>
+										<p class="mb-0"><?php echo htmlspecialchars($h['name']); ?> Bed </p>
 									</div>
 								</div>
 								<?php endforeach; ?>

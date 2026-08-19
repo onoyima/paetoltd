@@ -1,13 +1,16 @@
 <?php
-include 'auth_admin.php'; // Admin-only gate
+include 'auth_admin.php';
 include 'config.php';
 
 try {
-    $stmt = $conn->prepare("SELECT id, regNo, firstName, middleName, lastName, gender, contactNo, email FROM userregistration");
+    $stmt = $conn->prepare("SELECT id, regNo, firstName, middleName, lastName, gender, department, level, contactNo, parentPhone, email, userImage FROM userregistration");
     $stmt->execute();
     $result = $stmt->get_result();
     $users = array();
     while ($row = $result->fetch_assoc()) {
+        if (!empty($row['userImage'])) {
+            $row['userImage'] = base64_encode($row['userImage']);
+        }
         $users[] = $row;
     }
     echo json_encode(['status' => 'success', 'users' => $users]);
