@@ -1,4 +1,5 @@
 portal/uploads/payments/*
+portal/php/config.php
 .gitignore_tmp
 cgi-bin
 CODEBASE_ANALYSIS.md

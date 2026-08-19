@@ -51,4 +51,14 @@ if ($conn->connect_error) {
 
 // Use utf8mb4 so student names / payment details are stored and compared safely
 $conn->set_charset('utf8mb4');
+
+// PHPMailer SMTP configuration
+define('SMTP_HOST', 'smtp.mailtrap.io');
+define('SMTP_PORT', 2525);
+define('SMTP_USERNAME', 'c37ef4508c01e6');
+define('SMTP_PASSWORD', '25db67cf9f349e');
+define('SMTP_FROM_EMAIL', 'noreply@paetosltd.ng');
+define('SMTP_FROM_NAME', 'Pa-etos Portal');
+define('PASSWORD_RESET_BASE_URL', 'https://paetosltd.ng/portal');
+define('PASSWORD_RESET_EXPIRY_MINUTES', 30);
 ?>
