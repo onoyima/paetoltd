@@ -36,6 +36,7 @@ try {
     // Query to fetch assigned rooms and student details for the session,
     // optionally filtered by hostel
     $sql = "SELECT 
+                ar.`id`,
                 ar.`sn`,
                 ar.`hostel_id`,
                 h.`name` AS `hostel_name`,
@@ -71,6 +72,7 @@ try {
     $users = [];
     while ($row = $result->fetch_assoc()) {
         $users[] = [
+            'id' => (int)$row['id'],
             'sn' => $row['sn'],
             'hostel_id' => (int)$row['hostel_id'],
             'hostel_name' => $row['hostel_name'],

@@ -16,8 +16,8 @@ $userCount = 0;
 $hostelCount = 0;
 $roomCount = 0;
 $categoryCount = 0;
-$totalBeds = 0;
-$assignedRooms = 0;
+$totalTaken = 0;
+$totalAvailable = 0;
 $perHostel = array();
 
 if (isset($conn)) {
@@ -31,27 +31,32 @@ if (isset($conn)) {
 		$hostelCount = (int) $r->fetch_assoc()['c'];
 	}
 
-	$r = $conn->query("SELECT COUNT(*) c FROM room");
-	if ($r) {
-		$roomCount = (int) $r->fetch_assoc()['c'];
-	}
-
 	$r = $conn->query("SELECT COUNT(*) c FROM room_category");
 	if ($r) {
 		$categoryCount = (int) $r->fetch_assoc()['c'];
 	}
 
-	$r = $conn->query("SELECT COALESCE(SUM(full_capacity),0) s FROM room");
-	if ($r) {
-		$totalBeds = (int) $r->fetch_assoc()['s'];
-	}
-
+	// Count distinct room names from assign_room for the active session.
+	// "ROOM 101-1D" and "ROOM 101-2U" both map to "ROOM 101" → 1 room.
 	if ($sessionId > 0) {
-		$st = $conn->prepare("SELECT COUNT(*) c FROM assign_room WHERE matric_no IS NOT NULL AND session_id = ?");
+		$st = $conn->prepare("SELECT COUNT(DISTINCT SUBSTRING_INDEX(room_bunk, '-', 1)) c FROM assign_room WHERE session_id = ?");
 		if ($st) {
 			$st->bind_param('i', $sessionId);
 			$st->execute();
-			$assignedRooms = (int) $st->get_result()->fetch_assoc()['c'];
+			$roomCount = (int) $st->get_result()->fetch_assoc()['c'];
+			$st->close();
+		}
+	}
+
+	// Taken (student_name NOT NULL) vs Available (student_name IS NULL) per session
+	if ($sessionId > 0) {
+		$st = $conn->prepare("SELECT SUM(student_name IS NOT NULL) AS taken, SUM(student_name IS NULL) AS available FROM assign_room WHERE session_id = ?");
+		if ($st) {
+			$st->bind_param('i', $sessionId);
+			$st->execute();
+			$r = $st->get_result()->fetch_assoc();
+			$totalTaken = (int) $r['taken'];
+			$totalAvailable = (int) $r['available'];
 			$st->close();
 		}
 	}
@@ -62,26 +67,14 @@ if (isset($conn)) {
 			$hid = (int) $h['id'];
 			$perHostel[$hid] = array(
 				'name' => $h['name'],
-				'assigned' => 0,
-				'beds' => 0,
-				'rooms' => 0,
+				'taken' => 0,
+				'available' => 0,
 			);
 		}
 	}
 
-	$rbRes = $conn->query("SELECT hostel_id, COUNT(*) AS rooms, COALESCE(SUM(full_capacity),0) AS beds FROM room GROUP BY hostel_id");
-	if ($rbRes) {
-		while ($r = $rbRes->fetch_assoc()) {
-			$hid = (int) $r['hostel_id'];
-			if (isset($perHostel[$hid])) {
-				$perHostel[$hid]['rooms'] = (int) $r['rooms'];
-				$perHostel[$hid]['beds'] = (int) $r['beds'];
-			}
-		}
-	}
-
 	if ($sessionId > 0) {
-		$st = $conn->prepare("SELECT hostel_id, COUNT(*) c FROM assign_room WHERE session_id = ? AND matric_no IS NOT NULL GROUP BY hostel_id");
+		$st = $conn->prepare("SELECT hostel_id, SUM(student_name IS NOT NULL) AS taken, SUM(student_name IS NULL) AS available FROM assign_room WHERE session_id = ? GROUP BY hostel_id");
 		if ($st) {
 			$st->bind_param('i', $sessionId);
 			$st->execute();
@@ -89,7 +82,8 @@ if (isset($conn)) {
 			while ($row = $ar->fetch_assoc()) {
 				$hid = (int) $row['hostel_id'];
 				if (isset($perHostel[$hid])) {
-					$perHostel[$hid]['assigned'] = (int) $row['c'];
+					$perHostel[$hid]['taken'] = (int) $row['taken'];
+					$perHostel[$hid]['available'] = (int) $row['available'];
 				}
 			}
 			$st->close();
@@ -97,7 +91,6 @@ if (isset($conn)) {
 	}
 }
 
-$availableBeds = max(0, $totalBeds - $assignedRooms);
 $hostelChartData = array_values($perHostel);
 
 $pageTitle = 'Dashboard';
@@ -135,9 +128,9 @@ $pageHeader = 'Dashboard';
 										<?php if (pt_can('assign_room')): ?>
 											<a href="assigned_room.php" class="btn btn-primary btn-sm">Assign Room</a>
 										<?php endif; ?>
-										<?php if (pt_can('manage_hostel')): ?>
+										<!-- <?php if (pt_can('manage_hostel')): ?>
 											<a href="manage-hostel.php" class="btn btn-primary btn-sm">Manage Hostel</a>
-										<?php endif; ?>
+										<?php endif; ?> -->
 										<?php if (pt_can('confirm_payment')): ?>
 											<a href="confirm-payments.php" class="btn btn-primary btn-sm">Confirm Payments</a>
 										<?php endif; ?>
@@ -206,24 +199,17 @@ $pageHeader = 'Dashboard';
 										<p class="mb-0">Room Categories</p>
 									</div>
 								</div>
+								<?php foreach ($perHostel as $hid => $h): ?>
 								<div class="col-xl-2 col-lg-4 col-sm-6 col-6">
 									<div class="static-icon">
 										<span>
 											<i class="fas fa-bed"></i>
 										</span>
-										<h3 class="count mb-0"><?php echo $assignedRooms; ?></h3>
-										<p class="mb-0">Bed Spaces Assigned</p>
+										<h3 class="count mb-0"><?php echo $h['taken'] . ' / ' . $h['available']; ?></h3>
+										<p class="mb-0"><?php echo htmlspecialchars($h['name']); ?></p>
 									</div>
 								</div>
-								<div class="col-xl-2 col-lg-4 col-sm-6 col-6">
-									<div class="static-icon">
-										<span>
-											<i class="fas fa-box-open"></i>
-										</span>
-										<h3 class="count mb-0"><?php echo $availableBeds; ?></h3>
-										<p class="mb-0">Bed Spaces Available</p>
-									</div>
-								</div>
+								<?php endforeach; ?>
 							</div>
 						</div>
 					</div>
@@ -254,11 +240,11 @@ $pageHeader = 'Dashboard';
 			</div>
 
 			<div class="row">
-				<?php if (pt_can('manage_hostel')): ?>
+				<?php if (pt_can('manage_session')): ?>
 					<div class="col-xl-3 col-xxl-3 col-sm-6">
-						<a href="manage-hostel.php">
+						<a href="manage-session.php">
 							<div class="social-graph-wrapper widget-facebook">
-								<span class="s-icon">Manage Hostel<i class="fab fa-add"></i></span>
+								<span class="s-icon">Manage Session</span>
 							</div>
 						</a>
 					</div>
@@ -301,12 +287,12 @@ $pageHeader = 'Dashboard';
 			function ptInitCharts() {
 				if (!window.ApexCharts) return;
 				var labels = [];
-				var assigned = [];
-				var beds = [];
+				var taken = [];
+				var available = [];
 				(ptHostelData || []).forEach(function (h) {
 					labels.push(h.name);
-					assigned.push(h.assigned);
-					beds.push(h.beds);
+					taken.push(h.taken);
+					available.push(h.available);
 				});
 
 				if (ptChartInstances.donut) { ptChartInstances.donut.destroy(); }
@@ -318,7 +304,7 @@ $pageHeader = 'Dashboard';
 					ptChartInstances.donut = new ApexCharts(donutEl, {
 						chart: { type: 'donut', height: 320 },
 						labels: labels,
-						series: assigned,
+						series: taken,
 						colors: ['#F93A0B', '#ff8a3d', '#3a86ff', '#06d6a0', '#8338ec', '#f9c74f'],
 						legend: { position: 'bottom' },
 						responsive: [{ breakpoint: 768, options: { legend: { position: 'bottom' } } }]
@@ -329,10 +315,10 @@ $pageHeader = 'Dashboard';
 					ptChartInstances.bar = new ApexCharts(barEl, {
 						chart: { type: 'bar', height: 320, toolbar: { show: false } },
 						series: [
-							{ name: 'Bed Capacity', data: beds },
-							{ name: 'Assigned', data: assigned }
+							{ name: 'Taken', data: taken },
+							{ name: 'Available', data: available }
 						],
-						colors: ['#ff8a3d', '#F93A0B'],
+						colors: ['#F93A0B', '#06d6a0'],
 						plotOptions: { bar: { borderRadius: 3, columnWidth: '45%' } },
 						dataLabels: { enabled: false },
 						xaxis: { categories: labels },

@@ -12,7 +12,7 @@ error_reporting(E_ALL);
 $host = 'localhost';
 $dbname = 'doncassa_pat';
 $username = 'doncassa_pat';
-$password = '!JD-E17mJ%;9b!^{';
+$password = 'root';
 
 // Path to the MySQL socket file for MAMP (macOS)
 $unix_socket = '/Applications/MAMP/tmp/mysql/mysql.sock';

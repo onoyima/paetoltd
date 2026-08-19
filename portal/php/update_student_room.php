@@ -11,15 +11,14 @@ $response = ['status' => 'error', 'message' => 'Unknown error'];
 
 try {
     // Check if ID is provided
-    if (!isset($_POST['id']) || empty($_POST['id'])) {
+    $id = isset($_POST['id']) ? intval($_POST['id']) : 0;
+    if ($id <= 0) {
         throw new Exception('Student ID is required');
     }
 
-    $id = intval($_POST['id']);
-
     // Load the current record so we can keep the hostel/session context and
     // still find the reservation when the matric number changes.
-    $curStmt = $conn->prepare("SELECT sn, hostel_id, matric_no, session_id FROM assign_room WHERE sn = ?");
+    $curStmt = $conn->prepare("SELECT sn, hostel_id, matric_no, session_id, room_bunk FROM assign_room WHERE id = ?");
     if (!$curStmt) {
         throw new Exception('Prepare failed: ' . $conn->error);
     }
@@ -31,6 +30,7 @@ try {
     if (!$current) {
         throw new Exception('No record found with the provided ID');
     }
+    $current_room_bunk = $current['room_bunk'];
 
     $hostelId = isset($_POST['hostel_id']) ? intval($_POST['hostel_id']) : 0;
     if ($hostelId <= 0) {
@@ -61,9 +61,11 @@ try {
         $bed_space = pt_derive_bed_space($room_bunk);
     }
 
-    // Guard the unique (room_bunk, hostel_id, session_id) constraint
-    if ($hostelId > 0 && $sessionId > 0) {
-        $dupStmt = $conn->prepare("SELECT sn FROM assign_room WHERE room_bunk = ? AND hostel_id = ? AND session_id = ? AND sn != ? LIMIT 1");
+    // Guard the unique (room_bunk, hostel_id, session_id) constraint — only when
+    // the room_bunk actually changed (it's readonly in the modal, so this is
+    // mainly a safety net).
+    if ($hostelId > 0 && $sessionId > 0 && $room_bunk !== $current_room_bunk) {
+        $dupStmt = $conn->prepare("SELECT sn FROM assign_room WHERE room_bunk = ? AND hostel_id = ? AND session_id = ? AND id != ? LIMIT 1");
         $dupStmt->bind_param('siii', $room_bunk, $hostelId, $sessionId, $id);
         $dupStmt->execute();
         $dupStmt->store_result();
@@ -76,7 +78,7 @@ try {
 
     // Guard the unique (matric_no, session_id) constraint when the matric changes
     if ($sessionId > 0 && $matric_no !== $current['matric_no']) {
-        $matDupStmt = $conn->prepare("SELECT sn FROM assign_room WHERE matric_no = ? AND session_id = ? AND sn != ? LIMIT 1");
+        $matDupStmt = $conn->prepare("SELECT sn FROM assign_room WHERE matric_no = ? AND session_id = ? AND id != ? LIMIT 1");
         $matDupStmt->bind_param('sii', $matric_no, $sessionId, $id);
         $matDupStmt->execute();
         $matDupStmt->store_result();
@@ -98,7 +100,7 @@ try {
                           `room_bunk` = ?, 
                           `bed_space` = ?, 
                           `updated_at` = NOW() 
-                          WHERE `sn` = ?");
+                          WHERE `id` = ?");
 
     if (!$stmt) {
         throw new Exception('Prepare failed: ' . $conn->error);

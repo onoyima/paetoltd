@@ -34,14 +34,14 @@
 
 
 			</li>
-			<?php if (pt_can('manage_hostel')): ?>
+			<!-- <?php if (pt_can('manage_hostel')): ?>
 				<li><a class="" href="manage-hostel.php" aria-expanded="false">
 						<i class="fas fa-building"></i>
 						<span class="nav-text"> Manage Hostel</span>
 					</a>
 
 				</li>
-			<?php endif; ?>
+			<?php endif; ?> -->
 			<?php if (pt_can('assign_room')): ?>
 				<li><a class="" href="assigned_room.php" aria-expanded="false">
 						<i class="fas fa-bed"></i>

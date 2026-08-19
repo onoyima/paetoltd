@@ -10,6 +10,7 @@ $pageTitle = 'List Student';
 $pageHeader = 'List Student';
 ?>
 <?php include 'includes/head.php'; ?>
+<link href="vendor/datatables/css/jquery.dataTables.min.css" rel="stylesheet">
 <body>
 
 <?php include 'includes/header.php'; ?>
@@ -42,6 +43,7 @@ $pageHeader = 'List Student';
 										<th>Gender</th>
 										<th>Contact No</th>
 										<th>Email</th>
+										<th>Actions</th>
 									</tr>
 								</thead>
 								<tbody>
@@ -58,6 +60,7 @@ $pageHeader = 'List Student';
 	</div>
 </div>
 
+<script src="vendor/datatables/js/jquery.dataTables.min.js"></script>
 <script>
 	function esc(s) {
 		return String(s ?? '').replace(/[&<>"']/g, function (c) {
@@ -86,12 +89,21 @@ $pageHeader = 'List Student';
 						<td>${esc(user.contactNo)}</td>
 						<td>${esc(user.email)}</td>
 						<td>
-							<!-- Add actions here if needed -->
+							<a href="edit-student.php" class="btn btn-primary btn-sm px-2" title="Edit"><i class="fas fa-pencil-alt"></i> Edit</a>
 						</td>
 					</tr>
 				`;
 				tableBody.append(row);
 			});
+
+			$('#userTable').DataTable({
+			 ordering: true,
+			 searching: true,
+			 pageLength: 10,
+			 lengthMenu: [10, 25, 50, 100],
+			 language: { emptyTable: "No students found" }
+			});
+
 			if (window.PT) { window.PT.tableLoading(wrap, false); }
 		} else {
 			console.error('Error:', data.message);

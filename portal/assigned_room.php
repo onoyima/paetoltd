@@ -12,6 +12,43 @@ $sessions = pt_all_sessions();
 $activeSession = pt_active_session();
 $sessionId = pt_active_session_id();
 
+// Parse hostel ID from URL (e.g. assigned_room.php/2 or assigned_room.php?hostel_id=2)
+$hostelIdFromUrl = 0;
+if (!empty($_SERVER['PATH_INFO'])) {
+	$pathParts = explode('/', trim($_SERVER['PATH_INFO'], '/'));
+	if (count($pathParts) > 0 && is_numeric($pathParts[0])) {
+		$hostelIdFromUrl = (int)$pathParts[0];
+	}
+}
+if ($hostelIdFromUrl === 0 && !empty($_SERVER['REQUEST_URI'])) {
+	$uriParts = explode('?', $_SERVER['REQUEST_URI']);
+	$path = $uriParts[0];
+	$pos = strpos($path, 'assigned_room.php/');
+	if ($pos !== false) {
+		$subPath = substr($path, $pos + strlen('assigned_room.php/'));
+		$pathParts = explode('/', trim($subPath, '/'));
+		if (count($pathParts) > 0 && is_numeric($pathParts[0])) {
+			$hostelIdFromUrl = (int)$pathParts[0];
+		}
+	}
+}
+if ($hostelIdFromUrl === 0 && isset($_GET['hostel_id']) && is_numeric($_GET['hostel_id'])) {
+	$hostelIdFromUrl = (int)$_GET['hostel_id'];
+}
+
+$selectedHostel = null;
+if ($hostelIdFromUrl > 0) {
+	foreach ($hostels as $h) {
+		if ((int)$h['id'] === $hostelIdFromUrl) {
+			$selectedHostel = $h;
+			break;
+		}
+	}
+	if (!$selectedHostel) {
+		$hostelIdFromUrl = 0;
+	}
+}
+
 $hostelColors = array(
 	1 => '#F93A0B',
 	2 => '#3a86ff',
@@ -25,24 +62,33 @@ function pt_hostel_color($colors, $id) {
 }
 
 // Per-hostel assignment counts for the active session (server-side stat strip)
-$hostelAssigned = array();
-$totalAssigned = 0;
+$hostelTaken = array();
+$hostelAvailable = array();
+$totalTaken = 0;
+$totalAvailable = 0;
 if ($sessionId > 0 && isset($conn)) {
-	$st = $conn->prepare("SELECT hostel_id, COUNT(*) c FROM assign_room WHERE session_id = ? AND matric_no IS NOT NULL GROUP BY hostel_id");
+	$st = $conn->prepare("SELECT hostel_id, SUM(student_name IS NOT NULL) AS taken, SUM(student_name IS NULL) AS available FROM assign_room WHERE session_id = ? GROUP BY hostel_id");
 	if ($st) {
 		$st->bind_param('i', $sessionId);
 		$st->execute();
 		$res = $st->get_result();
 		while ($row = $res->fetch_assoc()) {
-			$hostelAssigned[(int)$row['hostel_id']] = (int)$row['c'];
+			$hid = (int)$row['hostel_id'];
+			$hostelTaken[$hid] = (int)$row['taken'];
+			$hostelAvailable[$hid] = (int)$row['available'];
 		}
 		$st->close();
 	}
-	$totalAssigned = array_sum($hostelAssigned);
+	$totalTaken = array_sum($hostelTaken);
+	$totalAvailable = array_sum($hostelAvailable);
 }
 
 $pageTitle = 'Assign Room';
 $pageHeader = 'Assign Room';
+if ($selectedHostel) {
+	$pageTitle .= ' - ' . htmlspecialchars($selectedHostel['name']);
+	$pageHeader .= ' - ' . htmlspecialchars($selectedHostel['name']);
+}
 ?>
 <?php include 'includes/head.php'; ?>
 <link href="vendor/datatables/css/jquery.dataTables.min.css" rel="stylesheet">
@@ -106,13 +152,32 @@ $pageHeader = 'Assign Room';
 					<div class="card-body py-3">
 						<div class="d-flex flex-wrap align-items-center">
 							<div class="pe-4">
-								<small class="text-muted d-block">Total Assigned</small>
-								<h3 class="mb-0" id="statTotal"><?php echo (int)$totalAssigned; ?></h3>
+								<small class="text-muted d-block">Total (Taken / Available)</small>
+								<h3 class="mb-0" id="statTotal">
+									<?php 
+									if ($selectedHostel) {
+										$sid = (int)$selectedHostel['id'];
+										$t = isset($hostelTaken[$sid]) ? $hostelTaken[$sid] : 0;
+										$a = isset($hostelAvailable[$sid]) ? $hostelAvailable[$sid] : 0;
+										echo $t . ' / ' . $a;
+									} else {
+										echo (int)$totalTaken . ' / ' . (int)$totalAvailable; 
+									}
+									?>
+								</h3>
 							</div>
-							<?php foreach ($hostels as $h): $color = pt_hostel_color($hostelColors, (int)$h['id']); ?>
-								<div class="px-4 border-start">
+							<?php foreach ($hostels as $h): 
+								if ($selectedHostel && (int)$h['id'] !== (int)$selectedHostel['id']) {
+									continue;
+								}
+								$color = pt_hostel_color($hostelColors, (int)$h['id']); 
+								$hid = (int)$h['id'];
+								$t = isset($hostelTaken[$hid]) ? $hostelTaken[$hid] : 0;
+								$a = isset($hostelAvailable[$hid]) ? $hostelAvailable[$hid] : 0;
+							?>
+								<div class="px-4 border-start" id="stat-hostel-container-<?php echo $hid; ?>">
 									<small class="text-muted d-block" style="color:<?php echo $color; ?>;"><?php echo htmlspecialchars($h['name']); ?></small>
-									<h3 class="mb-0" id="stat-hostel-<?php echo (int)$h['id']; ?>"><?php echo isset($hostelAssigned[(int)$h['id']]) ? (int)$hostelAssigned[(int)$h['id']] : 0; ?></h3>
+									<h3 class="mb-0" id="stat-hostel-<?php echo $hid; ?>"><?php echo $t . ' / ' . $a; ?></h3>
 								</div>
 							<?php endforeach; ?>
 						</div>
@@ -126,12 +191,20 @@ $pageHeader = 'Assign Room';
 				<div class="card">
 					<div class="card-body">
 						<ul class="nav nav-pills" id="assignHostelTabs" role="tablist">
+							<?php if (!$selectedHostel): ?>
+								<li class="nav-item" role="presentation">
+									<a class="nav-link active pt-assign-tab" id="assign-hostel-all-tab" href="#" role="tab" aria-selected="true" data-hostel-id="0">All Hostels</a>
+								</li>
+							<?php endif; ?>
+						<?php foreach ($hostels as $h): 
+							if ($selectedHostel && (int)$h['id'] !== (int)$selectedHostel['id']) {
+								continue;
+							}
+							$color = pt_hostel_color($hostelColors, (int)$h['id']); 
+							$isActive = $selectedHostel && (int)$h['id'] === (int)$selectedHostel['id'];
+						?>
 							<li class="nav-item" role="presentation">
-								<a class="nav-link active pt-assign-tab" id="assign-hostel-all-tab" href="#" role="tab" aria-selected="true" data-hostel-id="0">All Hostels</a>
-							</li>
-						<?php foreach ($hostels as $h): $color = pt_hostel_color($hostelColors, (int)$h['id']); ?>
-							<li class="nav-item" role="presentation">
-								<a class="nav-link pt-assign-tab" id="assign-hostel-<?php echo (int)$h['id']; ?>-tab" href="#" role="tab" aria-selected="false" data-hostel-id="<?php echo (int)$h['id']; ?>" style="border:1px solid <?php echo $color; ?>;color:<?php echo $color; ?>;">
+								<a class="nav-link pt-assign-tab <?php echo $isActive ? 'active' : ''; ?>" id="assign-hostel-<?php echo (int)$h['id']; ?>-tab" href="#" role="tab" aria-selected="<?php echo $isActive ? 'true' : 'false'; ?>" data-hostel-id="<?php echo (int)$h['id']; ?>" style="border:1px solid <?php echo $color; ?>;color:<?php echo $color; ?>;">
 									<i class="fas fa-building me-1"></i><?php echo htmlspecialchars($h['name']); ?>
 								</a>
 							</li>
@@ -177,7 +250,9 @@ $pageHeader = 'Assign Room';
 							<button id="downloadFilteredExcel" class="btn btn-warning btn-sm"><i class="fas fa-file-excel me-1"></i>Download Filtered Excel</button>
 							<button id="printTable" class="btn btn-secondary btn-sm"><i class="fas fa-print me-1"></i>Print Table</button>
 							<button id="uploadCSVBtn" class="btn btn-success btn-sm"><i class="fas fa-upload me-1"></i>Upload CSV</button>
-							<button id="downloadCSVTemplate" class="btn btn-info btn-sm"><i class="fas fa-file-csv me-1"></i>Download CSV Template</button>
+							<button id="downloadCSV" class="btn btn-primary btn-sm"><i class="fas fa-download me-1"></i>CSV Template</button>
+
+							<!-- <button id="downloadCSVTemplate" class="btn btn-info btn-sm"><i class="fas fa-file-csv me-1"></i>Download CSV Template</button> -->
 						</div>
 
 						<div class="table-responsive pt-table-wrap mt-2">
@@ -221,7 +296,11 @@ $pageHeader = 'Assign Room';
 							<div class="col-md-4 col-sm-6">
 								<label class="form-label small text-muted mb-1" for="manageHostel">Hostel</label>
 								<select id="manageHostel" class="form-select form-select-sm">
-									<?php foreach ($hostels as $h): ?>
+									<?php foreach ($hostels as $h): 
+										if ($selectedHostel && (int)$h['id'] !== (int)$selectedHostel['id']) {
+											continue;
+										}
+									?>
 										<option value="<?php echo (int)$h['id']; ?>"><?php echo htmlspecialchars($h['name']); ?></option>
 									<?php endforeach; ?>
 								</select>
@@ -274,7 +353,6 @@ $pageHeader = 'Assign Room';
 					<div class="form-group mt-3">
 						<label for="hostelSelector">Hostel</label>
 						<select id="hostelSelector" name="hostel_id" class="default-select form-control" required>
-							<option value="0">All Hostels</option>
 							<?php foreach ($hostels as $h): ?>
 								<option value="<?php echo (int)$h['id']; ?>"><?php echo htmlspecialchars($h['name']); ?></option>
 							<?php endforeach; ?>
@@ -284,9 +362,11 @@ $pageHeader = 'Assign Room';
 					<label for="sessionSelector">Academic Session</label>
 					<select id="sessionSelector" name="session_id" class="default-select form-control" required>
 						<?php foreach ($sessions as $s): ?>
-							<option value="<?php echo (int)$s['id']; ?>" <?php echo !empty($s['is_active']) ? 'selected' : ''; ?>>
-								<?php echo htmlspecialchars($s['name']); ?><?php echo !empty($s['is_active']) ? ' (Active)' : ''; ?>
-							</option>
+							<?php if (!empty($s['is_active'])): ?>
+								<option value="<?php echo (int)$s['id']; ?>" selected>
+									<?php echo htmlspecialchars($s['name']); ?> (Active)
+								</option>
+							<?php endif; ?>
 						<?php endforeach; ?>
 					</select>
 				</div>
@@ -352,13 +432,13 @@ $pageHeader = 'Assign Room';
 					</div>
 					<div class="form-group">
 						<label for="roomBunk">Room Bunk</label>
-						<input type="text" class="form-control" id="roomBunk" name="room_bunk" required>
-						<small class="form-text text-muted">Room Bunk is the unique room identifier. Editing it also updates the student's reservation.</small>
+						<input type="text" class="form-control" id="roomBunk" name="room_bunk" required readonly>
+						<small class="form-text text-muted">Room Bunk cannot be changed here.</small>
 					</div>
 					<div class="form-group">
 						<label for="bedSpace">Bed Space</label>
-						<input type="text" class="form-control" id="bedSpace" name="bed_space" placeholder="e.g. Bunk 2 Up">
-						<small class="form-text text-muted">Leave blank to auto-derive from Room Bunk (e.g. ROOM 323-2U → Bunk 2 Up).</small>
+						<input type="text" class="form-control" id="bedSpace" name="bed_space" placeholder="e.g. Bunk 2 Up" readonly>
+						<small class="form-text text-muted">Bed Space cannot be changed here.</small>
 					</div>
 				</form>
 			</div>
@@ -407,7 +487,7 @@ $pageHeader = 'Assign Room';
 </style>
 
 <script>
-	var currentHostelId = 0;
+	var currentHostelId = <?php echo (int)$hostelIdFromUrl; ?>;
 	var currentSessionId = <?php echo (int)$sessionId; ?>;
 	var ptUsers = [];
 	var ptConfirmAction = null;
@@ -433,64 +513,56 @@ $pageHeader = 'Assign Room';
 	}
 
 	function destroyTables() {
-		if (!jQuery.fn.DataTable) return;
-		['#userTable'].forEach(function (sel) {
-			var $t = $(sel);
-			if (!$t.length) return;
-			if (jQuery.fn.DataTable.isDataTable($t)) { $t.DataTable().destroy(); }
-		});
+		// DataTables disabled for now — plain table used instead
+		// if (!jQuery.fn.DataTable) return;
+		// ['#userTable'].forEach(function (sel) {
+		// 	var $t = $(sel);
+		// 	if (!$t.length) return;
+		// 	if (jQuery.fn.DataTable.isDataTable($t)) { $t.DataTable().destroy(); }
+		// });
 	}
 
 	function initDataTables() {
-		if (!window.jQuery || !jQuery.fn) return;
-		var doInit = function () {
-			var $t = $('#userTable');
-			if (!$t.length) return;
-			if (jQuery.fn.DataTable.isDataTable($t)) { $t.DataTable().destroy(); }
-			ptRoomTable = $t.DataTable({
-				pageLength: 10,
-				lengthMenu: [5, 10, 25, 50],
-				searching: true,
-				lengthChange: true,
-				info: true,
-				columnDefs: [
-					{ orderable: false, targets: -1 }
-				],
-				language: {
-					search: '',
-					searchPlaceholder: 'Search...',
-					lengthMenu: '_MENU_',
-					zeroRecords: 'No assigned rooms found.',
-					paginate: {
-						next: '<i class="fa fa-angle-double-right" aria-hidden="true"></i>',
-						previous: '<i class="fa fa-angle-double-left" aria-hidden="true"></i>'
-					}
-				}
-			});
-			applyColumnFilters();
-		};
-		if (!jQuery.fn.DataTable) {
-			var s = document.createElement('script');
-			s.src = 'vendor/datatables/js/jquery.dataTables.min.js';
-			s.onload = doInit;
-			s.onerror = function () { /* DataTables unavailable; plain table still shows */ };
-			document.body.appendChild(s);
-			return;
-		}
-		doInit();
+		// DataTables disabled for now — plain table used instead
+		// if (!window.jQuery || !jQuery.fn) return;
+		// var doInit = function () { ... };
+		// ...
 	}
 
 	function applyColumnFilters() {
-		if (!ptRoomTable) return;
-		ptRoomTable
-			.column(1).search($('#searchName').val(), false, false)
-			.column(2).search($('#searchMatric').val(), false, false)
-			.column(3).search($('#searchDepartment').val(), false, false)
-			.column(5).search($('#searchLevel').val(), false, false)
-			.column(6).search($('#searchStudentNumber').val(), false, false)
-			.column(7).search($('#searchRoomBunk').val(), false, false)
-			.column(8).search($('#searchBedSpace').val(), false, false)
-			.draw();
+		var filtered = getFilteredUsers();
+		var tableBody = $('#userTable tbody');
+		tableBody.empty();
+		filtered.forEach(function (user, index) {
+			var row = `
+				<tr data-sn="${esc(user.sn)}" data-hostel-id="${esc(user.hostel_id)}">
+					<td class="text-center">${index + 1}</td>
+					<td>${esc(user.student_name)}</td>
+					<td>${esc(user.matric_no)}</td>
+					<td>${esc(user.department)}</td>
+					<td>${esc(user.parent_number)}</td>
+					<td>${esc(user.level)}</td>
+					<td>${esc(user.student_number)}</td>
+					<td>${esc(user.room_bunk)}</td>
+					<td>${esc(user.bed_space)}</td>
+					<td>${esc(user.hostel_name || getHostelName(user.hostel_id))}</td>
+					<td class="text-center text-nowrap">
+						<button class="btn btn-primary btn-sm px-2 me-1 assign-update-btn" title="Update"
+							data-id="${esc(user.id)}"
+							data-sn="${esc(user.sn)}"
+							data-hostel-id="${esc(user.hostel_id)}"
+							data-student-name="${esc(user.student_name)}"
+							data-matric-no="${esc(user.matric_no)}"
+							data-department="${esc(user.department)}"
+							data-parent-number="${esc(user.parent_number)}"
+							data-level="${esc(user.level)}"
+							data-student-number="${esc(user.student_number)}"
+							data-room-bunk="${esc(user.room_bunk)}"
+							data-bed-space="${esc(user.bed_space)}"><i class="fas fa-pencil-alt"></i> Update</button>
+					</td>
+				</tr>`;
+			tableBody.append(row);
+		});
 	}
 
 	function renderTable() {
@@ -512,6 +584,7 @@ $pageHeader = 'Assign Room';
 					<td>${esc(user.hostel_name || getHostelName(user.hostel_id))}</td>
 					<td class="text-center text-nowrap">
 						<button class="btn btn-primary btn-sm px-2 me-1 assign-update-btn" title="Update"
+							data-id="${esc(user.id)}"
 							data-sn="${esc(user.sn)}"
 							data-hostel-id="${esc(user.hostel_id)}"
 							data-student-name="${esc(user.student_name)}"
@@ -521,8 +594,8 @@ $pageHeader = 'Assign Room';
 							data-level="${esc(user.level)}"
 							data-student-number="${esc(user.student_number)}"
 							data-room-bunk="${esc(user.room_bunk)}"
-							data-bed-space="${esc(user.bed_space)}"><i class="fas fa-pencil-alt"></i></button>
-						<button class="btn btn-danger btn-sm px-2 assign-revoke-btn" title="Revoke" data-sn="${esc(user.sn)}" data-name="${esc(user.student_name)}"><i class="fas fa-trash-alt"></i></button>
+							data-bed-space="${esc(user.bed_space)}"><i class="fas fa-pencil-alt"></i> Update</button>
+						<!-- <button class="btn btn-danger btn-sm px-2 assign-revoke-btn" title="Revoke" data-sn="${esc(user.sn)}" data-name="${esc(user.student_name)}"><i class="fas fa-trash-alt"></i></button> -->
 					</td>
 				</tr>
 			`;
@@ -531,13 +604,31 @@ $pageHeader = 'Assign Room';
 	}
 
 	function updateStatsFrom(users) {
-		var perHostel = {};
+		var taken = {}, available = {};
 		users.forEach(function (u) {
-			perHostel[u.hostel_id] = (perHostel[u.hostel_id] || 0) + 1;
+			if (u.student_name && u.student_name.trim() !== '') {
+				taken[u.hostel_id] = (taken[u.hostel_id] || 0) + 1;
+			} else {
+				available[u.hostel_id] = (available[u.hostel_id] || 0) + 1;
+			}
 		});
-		$('#statTotal').text(users.length);
+
+		function fmt(t, a) { return (t || 0) + ' / ' + (a || 0); }
+		var totalT = 0, totalA = 0;
+
+		if (currentHostelId > 0) {
+			totalT = taken[currentHostelId] || 0;
+			totalA = available[currentHostelId] || 0;
+			$('#statTotal').text(fmt(totalT, totalA));
+		} else {
+			ptHostelList.forEach(function (h) { totalT += (taken[h.id] || 0); totalA += (available[h.id] || 0); });
+			$('#statTotal').text(fmt(totalT, totalA));
+		}
 		ptHostelList.forEach(function (h) {
-			$('#stat-hostel-' + h.id).text(perHostel[h.id] || 0);
+			var statEl = $('#stat-hostel-' + h.id);
+			if (statEl.length) {
+				statEl.text(fmt(taken[h.id], available[h.id]));
+			}
 		});
 	}
 
@@ -574,12 +665,7 @@ $pageHeader = 'Assign Room';
 				currentSessionId = data.session_id || sessionId;
 				destroyTables();
 				renderTable();
-				if (currentHostelId === 0) {
-					updateStatsFrom(ptUsers);
-				} else {
-					loadStats(currentSessionId);
-				}
-				initDataTables();
+				updateStatsFrom(ptUsers);
 			},
 			error: function () {
 				if (window.PT && wrap) { PT.tableLoading(wrap, false); }
@@ -669,7 +755,7 @@ $pageHeader = 'Assign Room';
 
 	function openUpdateModal() {
 		var btn = $(this);
-		$('#studentId').val(btn.data('sn'));
+		$('#studentId').val(btn.data('id'));
 		$('#studentHostelId').val(btn.data('hostel-id') || '');
 		$('#studentName').val(btn.data('student-name'));
 		$('#matricNo').val(btn.data('matric-no'));
@@ -713,8 +799,6 @@ $pageHeader = 'Assign Room';
 			$('#hostelSelector').val(String(currentHostelId));
 		} else if (ptHostelList.length) {
 			$('#hostelSelector').val(String(ptHostelList[0].id));
-		} else {
-			$('#hostelSelector').val('0');
 		}
 		$('#sessionSelector').val(String(currentSessionId));
 		bootstrap.Modal.getOrCreateInstance(document.getElementById('csvUploadModal')).show();
@@ -736,6 +820,14 @@ $pageHeader = 'Assign Room';
 				if (response.status === 'success') {
 					if (window.PT) { PT.success(response.message); }
 					bootstrap.Modal.getInstance(document.getElementById('csvUploadModal'))?.hide();
+					var uploadedHostel = parseInt($('#hostelSelector').val(), 10) || 0;
+					var uploadedSession = parseInt($('#sessionSelector').val(), 10) || 0;
+					if (uploadedHostel > 0) { currentHostelId = uploadedHostel; }
+					if (uploadedSession > 0) {
+						currentSessionId = uploadedSession;
+						$('#assignSessionSelector').val(String(uploadedSession));
+					}
+					$('.nav-link[data-hostel-id="' + currentHostelId + '"]').tab('show');
 					fetchAssignedRooms();
 					if (!$('#pt-manage-uploads').hasClass('d-none')) { loadUploadBatches(); }
 				} else {
@@ -754,14 +846,18 @@ $pageHeader = 'Assign Room';
 	}
 
 	function downloadCSVTemplate() {
-		var url = 'download_csv_template.php?hostel_id=' + (currentHostelId || 0);
-		var link = document.createElement('a');
-		link.href = url;
-		link.download = 'room_assignment_template_hostel_' + (currentHostelId || 0) + '.csv';
+		var headers = ['Student Name', 'Matric No', 'Department', 'Parent Number', 'Level', 'Student Number', 'Room Bunk', 'Bed Space'];
+		var csvString = headers.join(',') + '\n';
+		var blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
+		var link = document.createElement("a");
+		var url = URL.createObjectURL(blob);
+		link.setAttribute("href", url);
+		link.setAttribute("download", 'room_assignment_template_hostel_' + (currentHostelId || 0) + '.csv');
 		link.style.display = 'none';
 		document.body.appendChild(link);
 		link.click();
 		document.body.removeChild(link);
+		URL.revokeObjectURL(url);
 	}
 
 	function showManageUploads() {
@@ -934,9 +1030,7 @@ $pageHeader = 'Assign Room';
 		$('#downloadCSVTemplate').on('click', downloadCSVTemplate);
 		$('#clearFilters').on('click', function () {
 			$('#searchName, #searchMatric, #searchDepartment, #searchLevel, #searchStudentNumber, #searchRoomBunk, #searchBedSpace').val('');
-			if (ptRoomTable) {
-				ptRoomTable.search('').columns().search('').draw();
-			}
+			applyColumnFilters();
 		});
 
 		// Column search filters

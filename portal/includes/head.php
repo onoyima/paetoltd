@@ -2,6 +2,17 @@
 <html lang="en">
 
 <head>
+	<?php
+	$protocol = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' || $_SERVER['SERVER_PORT'] == 443) ? "https://" : "http://";
+	$host = $_SERVER['HTTP_HOST'];
+	$scriptName = $_SERVER['SCRIPT_NAME'];
+	$baseDir = str_replace('\\', '/', dirname($scriptName));
+	if ($baseDir !== '/') {
+		$baseDir .= '/';
+	}
+	$baseUrl = $protocol . $host . $baseDir;
+	?>
+	<base href="<?php echo htmlspecialchars($baseUrl); ?>">
 
 	<!-- Meta -->
 	<meta charset="utf-8">
