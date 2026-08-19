@@ -1,14 +1,8 @@
 <?php
-session_start();
+require_once __DIR__ . '/php/rbac.php';
+pt_require_page('list_student');
 
-// Check iffgd usegffdr is logged in and has admin role
-if (!isset($_SESSION['user_id']) || !isset($_SESSION['role']) || $_SESSION['role'] !== 'admin') {
-	header("Location: admin_login.html"); // Redirect to login page if not logged in or not admin
-	exit();
-}
-
-include 'php/fetch_admin_info.php'; // Include file to fetch admin info
-
+include 'php/fetch_admin_info.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
