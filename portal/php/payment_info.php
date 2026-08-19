@@ -21,6 +21,7 @@ $response = array();
 // Once a new session is activated the old one stops working.
 $activeSession = pt_active_session();
 if (!$activeSession) {
+    while (ob_get_level()) { ob_end_clean(); }
     header('Content-Type: application/json');
     echo json_encode(array('error' => 'Bookings are currently closed. No active session.'));
     exit;
@@ -187,6 +188,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 $conn->close();
 
-// Return JSON response
+// Return JSON response — clear any buffered output (warnings, whitespace) first
+while (ob_get_level()) {
+    ob_end_clean();
+}
 header('Content-Type: application/json');
 echo json_encode($response);

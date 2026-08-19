@@ -21,6 +21,16 @@ $activeSession = pt_active_session();
 $bookingsOpen = (bool)$activeSession;
 $sessionName = $activeSession ? $activeSession['name'] : '';
 $hostels = pt_all_hostels();
+
+// Check if user already submitted payment for current session
+$alreadySubmitted = false;
+if ($activeSession) {
+    $checkStmt = $conn->prepare("SELECT id FROM payments WHERE userId = ? AND session_id = ?");
+    $checkStmt->bind_param("ii", $_SESSION['user_id'], $activeSession['id']);
+    $checkStmt->execute();
+    $alreadySubmitted = $checkStmt->get_result()->num_rows > 0;
+    $checkStmt->close();
+}
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -303,6 +313,14 @@ $hostels = pt_all_hostels();
 									Bookings are currently <strong>closed</strong>. No academic session is active.
 								</div>
 							<?php endif; ?>
+							<?php if ($alreadySubmitted): ?>
+								<div class="card-body text-center py-5">
+									<i class="fas fa-check-circle text-success" style="font-size: 48px;"></i>
+									<h5 class="mt-3">Payment Already Submitted</h5>
+									<p class="text-muted">You have already submitted your payment information for the <strong><?php echo htmlspecialchars($sessionName); ?></strong> session. Your payment is being reviewed.</p>
+									<a href="check-room.php" class="btn btn-primary mt-2">Check Allocation Status</a>
+								</div>
+							<?php else: ?>
 							<form class="profile-form" id="paymentForm" data-ajax enctype="multipart/form-data">
 							<div class="card-body">
 								<?php if (!$bookingsOpen): ?>
@@ -361,6 +379,7 @@ $hostels = pt_all_hostels();
 									<button class="btn btn-primary" type="submit" <?php echo $bookingsOpen ? '' : 'disabled'; ?>>SUBMIT</button>
 								</div>
 							</form>
+							<?php endif; ?>
 
 
 						</div>

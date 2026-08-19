@@ -12,49 +12,70 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['timeout']) || $_SESSION['t
 $_SESSION['timeout'] = time() + 1800; // 30 minutes timeout extension
 
 include 'php/fetch_user_details.php'; // Include the function file
+require_once __DIR__ . '/php/academic_helper.php';
 
 // Fetch user details
 $students_info = fetch_user_details();
 $user_payments = fetch_user_payments();
 
-// Determine button status
-$button_text = "Submit Proof";
-$button_link = "book-hostel.php";
-$room_no = "You don't have a room yet";
-$status_key = null;
+// Check if user has a room in assign_room for the current active session
+$has_room = false;
+$room_allocation = null;
+$room_status = "You don't have a room yet";
+$activeSession = pt_active_session();
+$sessionId = $activeSession ? (int)$activeSession['id'] : 0;
 
-if (!empty($user_payments)) {
-	$first = $user_payments[0];
-	$status_key = strtolower(trim((string) $first['status']));
+if ($sessionId > 0 && !empty($students_info['regNo'])) {
+    $stmtRoom = $conn->prepare("SELECT student_name, matric_no, room_bunk, hostel_id FROM assign_room WHERE matric_no = ? AND session_id = ?");
+    $stmtRoom->bind_param('si', $students_info['regNo'], $sessionId);
+    $stmtRoom->execute();
+    $resRoom = $stmtRoom->get_result();
+    if ($resRoom && $resRoom->num_rows > 0) {
+        $room_allocation = $resRoom->fetch_assoc();
+        $has_room = true;
+        $room_status = "Room Allocated: " . ($room_allocation['room_bunk'] ?? '');
+    }
+    $stmtRoom->close();
 }
 
-switch ($status_key) {
-	case 'assigned':
-	case 'approved':
-		$button_text = "Check Your Room";
-		$room_no = "Your Room Number is";
-		$button_link = "check-room.php";
-		break;
-	case 'confirmed':
-		$button_text = "Payment Confirmed";
-		$room_no = "Awaiting room assignment";
-		$button_link = "check-room.php";
-		break;
-	case 'rejected':
-		$button_text = "Not Eligible";
-		$room_no = "You don't have a room yet";
-		$button_link = "#";
-		break;
-	case 'pending':
-		$button_text = "Awaiting Approval";
-		$room_no = "You don't have a room yet";
-		$button_link = "check-room.php";
-		break;
-	default:
-		$button_text = "Submit Proof";
-		$room_no = "You don't have a room yet";
-		$button_link = "book-hostel.php";
-		break;
+// Determine button status
+$button_text = $has_room ? "View Room Allocation" : "Submit Proof";
+$button_link = $has_room ? "check-room.php" : "book-hostel.php";
+
+if (!$has_room && !empty($user_payments)) {
+    $first = $user_payments[0];
+    $status_key = strtolower(trim((string) $first['status']));
+    switch ($status_key) {
+        case 'assigned':
+        case 'approved':
+            $button_text = "Check Your Room";
+            $room_no = "Your Room Number is";
+            $button_link = "check-room.php";
+            break;
+        case 'confirmed':
+            $button_text = "Payment Confirmed";
+            $room_no = "Awaiting room assignment";
+            $button_link = "check-room.php";
+            break;
+        case 'rejected':
+            $button_text = "Not Eligible";
+            $room_no = "You don't have a room yet";
+            $button_link = "#";
+            break;
+        case 'pending':
+            $button_text = "Awaiting Approval";
+            $room_no = "You don't have a room yet";
+            $button_link = "check-room.php";
+            break;
+        default:
+            $button_text = "Submit Proof";
+            $room_no = "You don't have a room yet";
+            $button_link = "book-hostel.php";
+            break;
+    }
+    $room_no = $room_no ?? "You don't have a room yet";
+} else {
+    $room_no = $room_status;
 }
 ?>
 <!DOCTYPE html>
@@ -255,12 +276,44 @@ switch ($status_key) {
 					</li>
 					<li><a href="check-room.php" data-pt-nav aria-expanded="false">
 							<i class="flaticon-046-home"></i>
-							<span class="nav-text">Check Status</span>
+							<span class="nav-text">Check Room</span>
 						</a>
 					</li>
 
-				</ul>
+							<li><a class="has-arrow " href="javascript:void()" aria-expanded="false">
+							<i class="flaticon-093-waving"></i>
+							<span class="nav-text">Complain</span>
+						</a>
+						<ul aria-expanded="false">
+						    						<li>
+    <!-- WhatsApp Admin -->
+    <a class="" href="javascript:void(0)" onclick="paymentsendWhatsApp()" aria-expanded="false">
+        <i class="flaticon-093-waving"></i>
+        <span class="nav-text">Payment Iusses</span>
+    </a>
+</li>
+										      <li>
+    <!-- Call Admin -->
+    <a class="" href="tel:+2348033300519" aria-expanded="false">
+        <i class="flaticon-093-waving"></i>
+        <span class="nav-text">Call Admin</span>
+    </a>
+</li>
+							<li>
+    <!-- WhatsApp Admin -->
+    <a class="" href="javascript:void(0)" onclick="sendWhatsApp()" aria-expanded="false">
+        <i class="flaticon-093-waving"></i>
+        <span class="nav-text">WhatsApp Admin</span>
+    </a>
+</li>
 
+				</ul>
+				
+<li><a href="change-password.php" data-pt-nav aria-expanded="false">
+							<i class="flaticon-046-setting"></i>
+							<span class="nav-text">Password Reset</span>
+						</a>
+					</li>
 				<div class="pt-sidebar-foot">
 					<div class="pt-sidebar-item" role="button" aria-label="Toggle dark mode">
 						<i class="fas fa-moon"></i>
@@ -341,8 +394,7 @@ switch ($status_key) {
 														<span
 															class="text-primary d-block mb-xl-3 mb-1"><?php echo htmlspecialchars($students_info['regNo'] ?? 'Guest'); ?>
 														</span>
-														<span><i
-																class="fas fa-map-marker-alt me-1"><?php echo htmlspecialchars($students_info['department'] ?? 'Guest'); ?></i></span>
+														<span><?php echo htmlspecialchars($students_info['department'] ?? 'Guest'); ?></i></span>
 													</div>
 												</div>
 											</div>
@@ -484,7 +536,7 @@ switch ($status_key) {
 		***********************************-->
 		<div class="footer">
 			<div class="copyright">
-				<p>All rights reserved &copy; <?php echo date('Y'); ?> <a href="#" target="_blank">BMXCODERS</a></p>
+				<p>All rights reserved &copy; <?php echo date('Y'); ?> <a href="#" target="_blank"></a></p>
 			</div>
 		</div>
 

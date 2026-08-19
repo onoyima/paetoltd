@@ -281,6 +281,23 @@ $stmt->close();
 											<label class="form-label">Email Address</label>
 											<input type="email" class="form-control" name="email" value="<?php echo htmlspecialchars($students_info['email'] ?? ''); ?>" required>
 										</div>
+										<div class="col-sm-6 m-b30">
+											<label class="form-label">Department</label>
+											<input type="text" class="form-control" name="department" value="<?php echo htmlspecialchars($students_info['department'] ?? ''); ?>">
+										</div>
+										<div class="col-sm-6 m-b30">
+											<label class="form-label">Level</label>
+											<select class="form-control" name="level">
+												<option value="">Select Level</option>
+												<?php
+												$levels = ['100','200','300','400','500'];
+												$currentLevel = $students_info['level'] ?? '';
+												foreach ($levels as $lv):
+												?>
+													<option value="<?php echo $lv; ?>" <?php echo $currentLevel == $lv ? 'selected' : ''; ?>><?php echo $lv; ?> Level</option>
+												<?php endforeach; ?>
+											</select>
+										</div>
 									</div>
 								</div>
 								<div class="card-footer">
@@ -336,7 +353,9 @@ $stmt->close();
 					lastName: editForm.querySelector('[name="lastName"]').value,
 					gender: editForm.querySelector('[name="gender"]').value,
 					contactNo: editForm.querySelector('[name="contactNo"]').value,
-					email: editForm.querySelector('[name="email"]').value
+					email: editForm.querySelector('[name="email"]').value,
+					department: editForm.querySelector('[name="department"]').value,
+					level: editForm.querySelector('[name="level"]').value
 				};
 
 				try {
@@ -349,7 +368,9 @@ $stmt->close();
 							'&userData[lastName]=' + encodeURIComponent(userData.lastName) +
 							'&userData[gender]=' + encodeURIComponent(userData.gender) +
 							'&userData[contactNo]=' + encodeURIComponent(userData.contactNo) +
-							'&userData[email]=' + encodeURIComponent(userData.email)
+							'&userData[email]=' + encodeURIComponent(userData.email) +
+							'&userData[department]=' + encodeURIComponent(userData.department) +
+							'&userData[level]=' + encodeURIComponent(userData.level)
 					});
 					var result = await response.json();
 

@@ -32,6 +32,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
+    $department = $userData['department'] ?? '';
+    $level = $userData['level'] ?? '';
+
     // Prepare SQL statement to update user data
     $sql = "UPDATE userregistration SET
             regNo = ?,
@@ -40,14 +43,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             lastName = ?,
             gender = ?,
             contactNo = ?,
-            email = ?
+            email = ?,
+            department = ?,
+            level = ?
             WHERE id = ?";
 
     $stmt = $conn->prepare($sql);
     if (
         $stmt &&
         $stmt->bind_param(
-            "sssssssi",
+            "sssssssssi",
             $userData['regNo'],
             $userData['firstName'],
             $userData['middleName'],
@@ -55,6 +60,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $userData['gender'],
             $userData['contactNo'],
             $userData['email'],
+            $department,
+            $level,
             $userId
         ) &&
         $stmt->execute()
