@@ -9,7 +9,8 @@ require_once __DIR__ . '/php/academic_helper.php';
 
 $sessions = pt_all_sessions();
 $hostels = pt_all_hostels();
-$selSession = isset($_GET['session_id']) ? (int)$_GET['session_id'] : 0;
+$activeSession = pt_active_session();
+$activeSessionId = $activeSession ? (int)$activeSession['id'] : 0;
 $selHostel = isset($_GET['hostel_id']) ? (int)$_GET['hostel_id'] : 0;
 
 $pageTitle = 'Confirm Payments';
@@ -31,14 +32,9 @@ $pageHeader = 'Dashboard';
 		<div class="row mb-3 g-3">
 			<div class="col-sm-5 col-xl-3">
 				<label class="form-label">Academic Session</label>
-				<select id="filterSession" class="default-select form-control">
-					<option value="0">All Sessions</option>
-					<?php foreach ($sessions as $s): ?>
-						<option value="<?php echo (int)$s['id']; ?>" <?php echo $selSession === (int)$s['id'] ? 'selected' : ''; ?>>
-							<?php echo htmlspecialchars($s['name']); ?><?php echo $s['is_active'] ? ' (Active)' : ''; ?>
-						</option>
-					<?php endforeach; ?>
-				</select>
+				<div class="form-control" style="background: #f0f0f0; cursor: default;">
+					<?php echo $activeSession ? htmlspecialchars($activeSession['name']) . ' (Active)' : 'No Active Session'; ?>
+				</div>
 			</div>
 			<div class="col-sm-5 col-xl-3">
 				<label class="form-label">Hostel</label>
@@ -51,9 +47,9 @@ $pageHeader = 'Dashboard';
 					<?php endforeach; ?>
 				</select>
 			</div>
-			<?php if ($selSession || $selHostel): ?>
+			<?php if ($selHostel): ?>
 				<div class="col-sm-2 col-xl-3 d-flex align-items-end">
-					<a href="confirm-payments.php" class="btn btn-secondary light btn-sm">Clear Filters</a>
+					<a href="confirm-payments.php" class="btn btn-secondary light btn-sm">Clear Filter</a>
 				</div>
 			<?php endif; ?>
 		</div>
@@ -144,11 +140,12 @@ $pageHeader = 'Dashboard';
 	}
 
 	// Use event delegation so this works both on initial load and after PTNav AJAX swaps
-	$(document).on('change', '#filterSession, #filterHostel', function () {
-		var sessionId = $('#filterSession').val();
+	$(document).on('change', '#filterHostel', function () {
 		var hostelId = $('#filterHostel').val();
 		var params = [];
-		if (sessionId && sessionId !== '0') { params.push('session_id=' + encodeURIComponent(sessionId)); }
+		<?php if ($activeSessionId): ?>
+		params.push('session_id=<?php echo $activeSessionId; ?>');
+		<?php endif; ?>
 		if (hostelId && hostelId !== '0') { params.push('hostel_id=' + encodeURIComponent(hostelId)); }
 		var qs = params.length ? '?' + params.join('&') : '';
 		var url = 'confirm-payments.php' + qs;

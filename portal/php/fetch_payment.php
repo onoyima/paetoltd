@@ -85,6 +85,14 @@ function getTotalPaymentCount($conn, $sessionId = 0, $hostelId = 0) {
 $sessionFilter = isset($_GET['session_id']) ? (int)$_GET['session_id'] : 0;
 $hostelFilter = isset($_GET['hostel_id']) ? (int)$_GET['hostel_id'] : 0;
 
+// Default to active session if none specified
+if ($sessionFilter === 0) {
+    $active = pt_active_session();
+    if ($active) {
+        $sessionFilter = (int)$active['id'];
+    }
+}
+
 $userPayments = fetchUserPayments($conn, $sessionFilter, $hostelFilter);
 $conn->close();
 ?>
