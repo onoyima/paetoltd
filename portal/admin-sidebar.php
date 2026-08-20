@@ -187,14 +187,20 @@ include 'php/fetch_admin_info.php'; // Include file to fetch admin info
 
 						</li>
 					<?php endif; ?>
-					<?php if (pt_can('list_student')): ?>
-						<li><a class="" href="list-student.php" data-pt-nav aria-expanded="false">
-								<i class="flaticon-046-home"></i>
-								<span class="nav-text"> List Student</span>
-							</a>
+				<?php if (pt_can('list_student')): ?>
+					<li><a class="" href="list-student.php" data-pt-nav aria-expanded="false">
+							<i class="flaticon-046-home"></i>
+							<span class="nav-text"> List Student</span>
+						</a>
 
-						</li>
-					<?php endif; ?>
+					</li>
+					<li><a class="" href="search-student.php" data-pt-nav aria-expanded="false">
+							<i class="fas fa-search"></i>
+							<span class="nav-text"> Search Student</span>
+						</a>
+
+					</li>
+				<?php endif; ?>
 					<?php if (pt_can('manage_session')): ?>
 						<li><a class="" href="manage-session.php" data-pt-nav aria-expanded="false">
 								<i class="fas fa-calendar-alt"></i>

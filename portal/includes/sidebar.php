@@ -65,6 +65,12 @@
 					</a>
 
 				</li>
+				<li><a class="" href="search-student.php" aria-expanded="false">
+						<i class="fas fa-search"></i>
+						<span class="nav-text"> Search Student</span>
+					</a>
+
+				</li>
 			<?php endif; ?>
 			<?php if (pt_can('manage_session')): ?>
 				<li><a class="" href="manage-session.php" aria-expanded="false">

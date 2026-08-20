@@ -47,7 +47,7 @@ if ($stmt) {
 						</div>
 						<div class="card-body">
 							<div class="table-responsive pt-table-wrap">
-								<table class="table display mb-4 dataTablesCard card-table" id="userTable">
+								<table class="table mb-4 card-table" id="userTable">
 									<thead>
 										<tr>
 											<th>S/N</th>
@@ -197,28 +197,22 @@ if ($stmt) {
 
 	<?php include 'includes/footer.php'; ?>
 
-	<script src="vendor/datatables/js/jquery.dataTables.min.js"></script>
-	<link href="vendor/datatables/css/jquery.dataTables.min.css" rel="stylesheet">
 	<script>
 	function initListStudent() {
 		if (window._listStudentInit) return;
 		window._listStudentInit = true;
 
-		// Initialise DataTables on the already-populated table (server-rendered rows)
-		var userTable = $('#userTable').DataTable({
-			pageLength: 25,
-			order: [[2, 'asc']], // sort by First Name
-			language: { search: 'Search students:' }
-		});
-
+		// Simple client-side search — filter table rows directly
 		$('#searchInput').on('keyup', function() {
-			userTable.search(this.value).draw();
+			var q = this.value.toLowerCase();
+			$('#userTable tbody tr').each(function() {
+				var text = $(this).text().toLowerCase();
+				$(this).toggle(text.indexOf(q) > -1);
+			});
 		});
 
 		// Edit button — fetch full record (including image) on demand
 		$('#userTable').on('click', '.edit-student-btn', function() {
-			// Use attr() instead of data() — DataTables re-renders rows and can
-			// break jQuery's .data() cache on the original elements.
 			var id = $(this).attr('data-id');
 			fetch('php/fetch_user_single.php?id=' + id)
 				.then(function(res) { return res.json(); })
