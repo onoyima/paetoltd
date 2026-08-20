@@ -106,7 +106,7 @@ $pageHeader = 'Dashboard';
 					<?php else: ?>
 						<div class="alert alert-info d-flex align-items-center">
 							<i class="fas fa-inbox me-2"></i>
-							<span>No user payments found<?php echo ($selSession || $selHostel) ? ' for the selected session/hostel filters' : ''; ?>. New payments will appear here once students upload their receipts.</span>
+							<span>No user payments found<?php echo $selHostel ? ' for the selected hostel' : ''; ?>. New payments will appear here once students upload their receipts.</span>
 						</div>
 					<?php endif; ?>
 				</div>
