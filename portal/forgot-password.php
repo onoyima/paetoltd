@@ -102,30 +102,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['secretQuestion'])) {
         <?php if ($messageType !== 'success'): ?>
         <ul class="nav nav-tabs" role="tablist">
             <li class="nav-item">
-                <a class="nav-link active" data-tab="email" onclick="switchTab('email')">Email Reset</a>
+                <a class="nav-link active" data-tab="secret" onclick="switchTab('secret')">Secret Question</a>
             </li>
             <li class="nav-item">
-                <a class="nav-link" data-tab="secret" onclick="switchTab('secret')">Secret Question</a>
+                <a class="nav-link" data-tab="email" onclick="switchTab('email')">Email Reset</a>
             </li>
         </ul>
 
-        <!-- Email Reset Tab -->
-        <div id="tab-email" class="tab-pane active">
-            <form id="emailResetForm" onsubmit="sendResetEmail(event)">
-                <div class="form-group">
-                    <label for="resetEmail">Email Address:</label>
-                    <input type="email" id="resetEmail" name="email" class="form-control"
-                           placeholder="Enter your registered email" required>
-                </div>
-                <button type="submit" class="btn btn-primary" id="emailSubmitBtn">
-                    <span class="btn-text">Send Reset Link</span>
-                    <span class="loading" id="emailLoading">Sending...</span>
-                </button>
-            </form>
-        </div>
-
         <!-- Secret Question Tab -->
-        <div id="tab-secret" class="tab-pane">
+        <div id="tab-secret" class="tab-pane active">
             <form method="POST" action="">
                 <div class="form-group">
                     <label for="sqEmail">Email Address:</label>
@@ -175,6 +160,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['secretQuestion'])) {
                 </div>
 
                 <button type="submit" class="btn btn-danger">Reset Password</button>
+            </form>
+        </div>
+
+        <!-- Email Reset Tab -->
+        <div id="tab-email" class="tab-pane">
+            <form id="emailResetForm" onsubmit="sendResetEmail(event)">
+                <div class="form-group">
+                    <label for="resetEmail">Email Address:</label>
+                    <input type="email" id="resetEmail" name="email" class="form-control"
+                           placeholder="Enter your registered email" required>
+                </div>
+                <button type="submit" class="btn btn-primary" id="emailSubmitBtn">
+                    <span class="btn-text">Send Reset Link</span>
+                    <span class="loading" id="emailLoading">Sending...</span>
+                </button>
             </form>
         </div>
         <?php endif; ?>
