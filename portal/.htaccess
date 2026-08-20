@@ -3,3 +3,17 @@
 # Do NOT expose PHP errors to visitors
 php_flag display_errors Off
 php_flag log_errors On
+
+RewriteEngine On
+
+# Remove .html extension (e.g. /portal/login → serves login.html)
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME}.html -f
+RewriteRule ^([^/]+)/?$ $1.html [L]
+
+# Remove .php extension (e.g. /portal/dashboard → serves dashboard.php)
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME}.php -f
+RewriteRule ^([^/]+)/?$ $1.php [L]
