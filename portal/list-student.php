@@ -187,12 +187,18 @@ $pageHeader = 'List Students';
 			language: { search: 'Search students:' }
 		});
 
-		$.getJSON('php/fetch_user.php', function(data) {
-			if (data.status === 'success') {
-				allUsers = data.users;
-				userTable.clear().rows.add(allUsers).draw();
-			}
-		});
+		fetch('php/fetch_user.php')
+			.then(function(res) { return res.json(); })
+			.then(function(data) {
+				if (data.status === 'success') {
+					allUsers = data.users;
+					userTable.clear().rows.add(allUsers).draw();
+				}
+			})
+			.catch(function(err) {
+				if (window.PT) { PT.error('Failed to load students.'); }
+				console.error('Fetch error:', err);
+			});
 
 		$('#searchInput').on('keyup', function() {
 			userTable.search(this.value).draw();
@@ -256,30 +262,29 @@ $pageHeader = 'List Students';
 				formData.append('userImage', imageFile);
 			}
 
-			$.ajax({
-				url: 'php/update_user_full.php',
-				type: 'POST',
-				data: formData,
-				processData: false,
-				contentType: false,
-				dataType: 'json',
-				success: function(response) {
-					if (response.status === 'success') {
-						bootstrap.Modal.getInstance(document.getElementById('editStudentModal')).hide();
-						$.getJSON('php/fetch_user.php', function(data) {
+			fetch('php/update_user_full.php', {
+				method: 'POST',
+				body: formData
+			})
+			.then(function(res) { return res.json(); })
+			.then(function(response) {
+				if (response.status === 'success') {
+					bootstrap.Modal.getInstance(document.getElementById('editStudentModal')).hide();
+					fetch('php/fetch_user.php')
+						.then(function(res) { return res.json(); })
+						.then(function(data) {
 							if (data.status === 'success') {
 								allUsers = data.users;
 								userTable.clear().rows.add(allUsers).draw();
 							}
 						});
-						if (window.PT) { PT.success('Student updated successfully!'); }
-					} else {
-						if (window.PT) { PT.error(response.message || 'Update failed'); }
-					}
-				},
-				error: function() {
-					if (window.PT) { PT.error('Error updating student. Please try again.'); }
+					if (window.PT) { PT.success('Student updated successfully!'); }
+				} else {
+					if (window.PT) { PT.error(response.message || 'Update failed'); }
 				}
+			})
+			.catch(function() {
+				if (window.PT) { PT.error('Error updating student. Please try again.'); }
 			});
 		});
 	}
