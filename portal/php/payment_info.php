@@ -158,10 +158,14 @@ try {
         } else {
             $file = $_FILES['paymentInfo'];
 
-            // Detect the real file type
-            $finfo = finfo_open(FILEINFO_MIME_TYPE);
-            $fileType = $finfo ? finfo_file($finfo, $file['tmp_name']) : $file['type'];
-            if ($finfo) finfo_close($finfo);
+            // Detect the real file type if Fileinfo extension is installed, else fallback to client mime
+            if (function_exists('finfo_open')) {
+                $finfo = finfo_open(FILEINFO_MIME_TYPE);
+                $fileType = $finfo ? finfo_file($finfo, $file['tmp_name']) : $file['type'];
+                if ($finfo) finfo_close($finfo);
+            } else {
+                $fileType = $file['type'];
+            }
 
             $allowedTypes = array('image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp');
             if (!in_array($fileType, $allowedTypes, true)) {
