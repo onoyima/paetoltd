@@ -132,84 +132,88 @@ function pt_save_payment_image($srcTmp, $dstPath, $maxBytes = 2097152, &$errorMs
     return true;
 }
 
-// Check if form is submitted
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Always use the session user id (prevents IDOR)
-    $userId = (int)$_SESSION['user_id'];
-    $bankName = isset($_POST['bankName']) ? trim($_POST['bankName']) : '';
-    $payersName = isset($_POST['payers_name']) ? trim($_POST['payers_name']) : '';
-    $hostelId = isset($_POST['hostel_id']) ? (int)$_POST['hostel_id'] : 0;
+// Return JSON response — clear any buffered output first
+function send_json_response($response) {
+    while (ob_get_level()) { ob_end_clean(); }
+    header('Content-Type: application/json');
+    echo json_encode($response);
+    exit;
+}
 
-    if ($bankName === '' || $payersName === '') {
-        $response['error'] = "Bank name and payer name are required";
-    } elseif ($hostelId <= 0 || !in_array($hostelId, array_map('intval', array_column(pt_all_hostels(), 'id')), true)) {
-        $response['error'] = "Please select a valid hostel";
-    } elseif (!isset($_FILES['paymentInfo']) || $_FILES['paymentInfo']['error'] !== UPLOAD_ERR_OK) {
-        $response['error'] = "Please select a file to upload";
-    } else {
-        $file = $_FILES['paymentInfo'];
+try {
+    // Check if form is submitted
+    if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+        // Always use the session user id (prevents IDOR)
+        $userId = (int)$_SESSION['user_id'];
+        $bankName = isset($_POST['bankName']) ? trim($_POST['bankName']) : '';
+        $payersName = isset($_POST['payers_name']) ? trim($_POST['payers_name']) : '';
+        $hostelId = isset($_POST['hostel_id']) ? (int)$_POST['hostel_id'] : 0;
 
-        // Detect the real file type instead of trusting the client MIME header
-        $finfo = finfo_open(FILEINFO_MIME_TYPE);
-        $fileType = $finfo ? finfo_file($finfo, $file['tmp_name']) : $file['type'];
-        if ($finfo) {
-            finfo_close($finfo);
-        }
-
-        // Only image files are accepted (no PDFs or anything else)
-        $allowedTypes = array('image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp');
-        if (!in_array($fileType, $allowedTypes, true)) {
-            $response['error'] = "Only image files (JPEG, PNG, GIF, WebP) are allowed. PDFs are not accepted.";
+        if ($bankName === '' || $payersName === '') {
+            $response['error'] = "Bank name and payer name are required";
+        } elseif ($hostelId <= 0 || !in_array($hostelId, array_map('intval', array_column(pt_all_hostels(), 'id')), true)) {
+            $response['error'] = "Please select a valid hostel";
+        } elseif (!isset($_FILES['paymentInfo']) || $_FILES['paymentInfo']['error'] !== UPLOAD_ERR_OK) {
+            $response['error'] = "Please select a file to upload";
         } else {
-            // A too-large image is allowed but is auto-compressed to at most 2MB.
-            $uploadDir = __DIR__ . '/../uploads/payments/';
-            if (!is_dir($uploadDir) && !mkdir($uploadDir, 0775, true)) {
-                $response['error'] = "Upload folder is not writable.";
+            $file = $_FILES['paymentInfo'];
+
+            // Detect the real file type
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $fileType = $finfo ? finfo_file($finfo, $file['tmp_name']) : $file['type'];
+            if ($finfo) finfo_close($finfo);
+
+            $allowedTypes = array('image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp');
+            if (!in_array($fileType, $allowedTypes, true)) {
+                $response['error'] = "Only image files (JPEG, PNG, GIF, WebP) are allowed.";
             } else {
-                $fileName = 'pay_' . $userId . '_' . $sessionId . '_' . time() . '_' . bin2hex(random_bytes(4)) . '.jpg';
-                $relPath = 'uploads/payments/' . $fileName;
-                $absPath = $uploadDir . $fileName;
-
-                $errorMsg = "";
-                if (!pt_save_payment_image($file['tmp_name'], $absPath, 2097152, $errorMsg)) {
-                    $response['error'] = "Could not process the image. " . $errorMsg . " Please upload a valid image under 2MB.";
+                $uploadDir = __DIR__ . '/../uploads/payments/';
+                if (!is_dir($uploadDir) && !mkdir($uploadDir, 0775, true)) {
+                    $response['error'] = "Upload folder is not writable.";
                 } else {
-                    // Check if user has already submitted payment info for this session
-                    $stmt_check = $conn->prepare("SELECT userId FROM payments WHERE userId = ? AND session_id = ?");
-                    $stmt_check->bind_param("ii", $userId, $sessionId);
-                    $stmt_check->execute();
-                    $stmt_check->store_result();
+                    $fileName = 'pay_' . $userId . '_' . $sessionId . '_' . time() . '_' . bin2hex(random_bytes(4)) . '.jpg';
+                    $relPath = 'uploads/payments/' . $fileName;
+                    $absPath = $uploadDir . $fileName;
 
-                    if ($stmt_check->num_rows > 0) {
-                        $stmt_check->close();
-                        @unlink($absPath); // don't keep an orphaned file
-                        $response['error'] = "User has already submitted payment information";
+                    $errorMsg = "";
+                    if (!pt_save_payment_image($file['tmp_name'], $absPath, 2097152, $errorMsg)) {
+                        $response['error'] = "Could not process the image. " . $errorMsg . " Please upload a valid image under 2MB.";
                     } else {
-                        $stmt_check->close();
+                        // Check if already submitted
+                        $stmt_check = $conn->prepare("SELECT userId FROM payments WHERE userId = ? AND session_id = ?");
+                        if (!$stmt_check) throw new Exception("Prepare check failed: " . $conn->error);
+                        $stmt_check->bind_param("ii", $userId, $sessionId);
+                        $stmt_check->execute();
+                        $stmt_check->store_result();
 
-                        // Store the file path on disk; keep paymentInfo NULL for new rows
-                        $stmt_insert = $conn->prepare("INSERT INTO payments (userId, session_id, hostel_id, paymentInfo, payment_file, bankName, payers_name, status, uploadDate) VALUES (?, ?, ?, NULL, ?, ?, ?, 'Pending', NOW())");
-                        $stmt_insert->bind_param("iissss", $userId, $sessionId, $hostelId, $relPath, $bankName, $payersName);
-
-                        if ($stmt_insert->execute()) {
-                            $response['success'] = "Payment information uploaded successfully";
-                        } else {
+                        if ($stmt_check->num_rows > 0) {
+                            $stmt_check->close();
                             @unlink($absPath);
-                            $response['error'] = "Failed to upload payment information: " . $stmt_insert->error;
+                            $response['error'] = "User has already submitted payment information";
+                        } else {
+                            $stmt_check->close();
+
+                            $stmt_insert = $conn->prepare("INSERT INTO payments (userId, session_id, hostel_id, paymentInfo, payment_file, bankName, payers_name, status, uploadDate) VALUES (?, ?, ?, NULL, ?, ?, ?, 'Pending', NOW())");
+                            if (!$stmt_insert) throw new Exception("Prepare insert failed: " . $conn->error);
+                            
+                            $stmt_insert->bind_param("iissss", $userId, $sessionId, $hostelId, $relPath, $bankName, $payersName);
+
+                            if ($stmt_insert->execute()) {
+                                $response['success'] = "Payment information uploaded successfully";
+                            } else {
+                                @unlink($absPath);
+                                $response['error'] = "Failed to upload payment information: " . $stmt_insert->error;
+                            }
+                            $stmt_insert->close();
                         }
-                        $stmt_insert->close();
                     }
                 }
             }
         }
     }
+} catch (Throwable $e) {
+    $response['error'] = "System Error: " . $e->getMessage();
 }
 
-$conn->close();
-
-// Return JSON response — clear any buffered output (warnings, whitespace) first
-while (ob_get_level()) {
-    ob_end_clean();
-}
-header('Content-Type: application/json');
-echo json_encode($response);
+if (isset($conn) && $conn) $conn->close();
+send_json_response($response);
