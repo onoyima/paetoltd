@@ -33,13 +33,15 @@ $sessionId = (int)$activeSession['id'];
    compressed to at most 2MB so the system stays fast. The old BLOB
    column is left untouched for legacy rows.
    ------------------------------------------------------------------ */
-function pt_save_payment_image($srcTmp, $dstPath, $maxBytes = 2097152) {
+function pt_save_payment_image($srcTmp, $dstPath, $maxBytes = 2097152, &$errorMsg = null) {
     if (!function_exists('imagecreatetruecolor')) {
+        $errorMsg = "GD library is not installed.";
         return false;
     }
 
     $info = @getimagesize($srcTmp);
     if (!$info) {
+        $errorMsg = "Not a valid image (getimagesize failed).";
         return false;
     }
 
@@ -50,9 +52,12 @@ function pt_save_payment_image($srcTmp, $dstPath, $maxBytes = 2097152) {
         case 'image/png':  $img = @imagecreatefrompng($srcTmp); break;
         case 'image/gif':  $img = @imagecreatefromgif($srcTmp); break;
         case 'image/webp': $img = @imagecreatefromwebp($srcTmp); break;
-        default:           return false;
+        default:           
+            $errorMsg = "Unsupported image format: " . $mime;
+            return false;
     }
     if (!$img) {
+        $errorMsg = "Could not decode image (possibly corrupted).";
         return false;
     }
 
@@ -108,10 +113,15 @@ function pt_save_payment_image($srcTmp, $dstPath, $maxBytes = 2097152) {
     imagedestroy($img);
 
     if ($data === null || strlen($data) > $maxBytes) {
+        $errorMsg = "Image could not be compressed under 2MB.";
         return false;
     }
 
-    return file_put_contents($dstPath, $data) !== false;
+    if (file_put_contents($dstPath, $data) === false) {
+        $errorMsg = "Failed to write image to disk.";
+        return false;
+    }
+    return true;
 }
 
 // Check if form is submitted
@@ -152,8 +162,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $relPath = 'uploads/payments/' . $fileName;
                 $absPath = $uploadDir . $fileName;
 
-                if (!pt_save_payment_image($file['tmp_name'], $absPath, 2097152)) {
-                    $response['error'] = "Could not process the image. Please upload a valid image under 2MB.";
+                $errorMsg = "";
+                if (!pt_save_payment_image($file['tmp_name'], $absPath, 2097152, $errorMsg)) {
+                    $response['error'] = "Could not process the image. " . $errorMsg . " Please upload a valid image under 2MB.";
                 } else {
                     // Check if user has already submitted payment info for this session
                     $stmt_check = $conn->prepare("SELECT userId FROM payments WHERE userId = ? AND session_id = ?");
