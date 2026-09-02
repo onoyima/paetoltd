@@ -195,7 +195,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $response['success'] = "Payment information uploaded successfully";
                         } else {
                             @unlink($absPath);
-                            $response['error'] = "Failed to upload payment information";
+                            $response['error'] = "Failed to upload payment information: " . $stmt_insert->error;
                         }
                         $stmt_insert->close();
                     }
