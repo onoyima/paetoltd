@@ -35,7 +35,15 @@ $sessionId = (int)$activeSession['id'];
    ------------------------------------------------------------------ */
 function pt_save_payment_image($srcTmp, $dstPath, $maxBytes = 2097152, &$errorMsg = null) {
     if (!function_exists('imagecreatetruecolor')) {
-        $errorMsg = "GD library is not installed.";
+        if (filesize($srcTmp) <= $maxBytes) {
+            if (copy($srcTmp, $dstPath)) {
+                return true;
+            } else {
+                $errorMsg = "GD missing, and failed to copy file.";
+                return false;
+            }
+        }
+        $errorMsg = "GD library is not installed for compression, and image is over 2MB.";
         return false;
     }
 
