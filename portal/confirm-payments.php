@@ -47,11 +47,7 @@ $pageHeader = 'Dashboard';
 					<?php endforeach; ?>
 				</select>
 			</div>
-			<?php if ($selHostel): ?>
-				<div class="col-sm-2 col-xl-3 d-flex align-items-end">
-					<a href="confirm-payments.php" class="btn btn-secondary light btn-sm">Clear Filter</a>
-				</div>
-			<?php endif; ?>
+
 		</div>
 		<div class="row">
 			<div class="col-xl-12">
@@ -93,7 +89,9 @@ $pageHeader = 'Dashboard';
 										<td>
 											<button class="btn btn-success view-payment"
 												data-userid="<?= $row['id'] ?>"
-												data-paymentid="<?= (int)$row['payment_id'] ?>">Assign</button>
+												data-paymentid="<?= (int)$row['payment_id'] ?>"
+												data-hostelid="<?= (int)$row['hostel_id'] ?>"
+												data-sessionid="<?= (int)$row['session_id'] ?>">Assign</button>
 										</td>
 										<td>
 											<button class="btn btn-danger">Reject</button>
@@ -139,33 +137,30 @@ $pageHeader = 'Dashboard';
 		});
 	}
 
-	// Use event delegation so this works both on initial load and after PTNav AJAX swaps
+	// Client-side filtering for hostels using DataTables
 	$(document).on('change', '#filterHostel', function () {
-		var hostelId = $('#filterHostel').val();
-		var params = [];
-		<?php if ($activeSessionId): ?>
-		params.push('session_id=<?php echo $activeSessionId; ?>');
-		<?php endif; ?>
-		if (hostelId && hostelId !== '0') { params.push('hostel_id=' + encodeURIComponent(hostelId)); }
-		var qs = params.length ? '?' + params.join('&') : '';
-		var url = 'confirm-payments.php' + qs;
-		if (window.PTNav && PTNav.navigate) { PTNav.navigate(url); } else { window.location.href = url; }
+		var hostelName = $(this).find('option:selected').text().trim();
+		var table = $('#example5').DataTable();
+		
+		if ($(this).val() == '0') {
+			table.column(8).search('').draw();
+		} else {
+			// Exact match for hostel name
+			table.column(8).search('^' + hostelName + '$', true, false).draw();
+		}
 	});
 
 	$(document).on('click', '.view-payment', function () {
 			const userId = this.getAttribute('data-userid');
 			const paymentId = this.getAttribute('data-paymentid') || '';
+			const hostelId = this.getAttribute('data-hostelid');
+			const sessionId = this.getAttribute('data-sessionid');
 			const viewModalEl = document.getElementById('viewModal');
 			if (!viewModalEl) return;
 			const modalBody = document.querySelector('#viewModal .modal-body');
 			var viewModal = bootstrap.Modal.getOrCreateInstance(viewModalEl);
 			viewModal.show();
-			// Show a loading state immediately so it's clear data is coming
-			modalBody.innerHTML = `
-				<div class="text-center py-4">
-					<div class="spinner-border text-primary" role="status"></div>
-					<p class="mt-3 mb-0 text-muted">Loading payment details...</p>
-				</div>`;
+			modalBody.innerHTML = '';
 			fetch(`php/fetch_user_d.php?id=${encodeURIComponent(userId)}&pid=${encodeURIComponent(paymentId)}`)
 				.then(response => response.json())
 				.then(data => {
@@ -190,28 +185,18 @@ $pageHeader = 'Dashboard';
 						${data.has_proof ? `<div class="mt-3">
 							<img src="php/payment_proof.php?pid=${encodeURIComponent(data.payment_id || paymentId)}" width="100%" height="auto" class="img-fluid" alt="Payment receipt">
 						</div>` : '<p class="text-muted mt-3">No payment proof attached.</p>'}
-						<form id="reservationForm"> 
-							<div class="mb-4">
-								<label class="form-label required">Select Room Category</label>
-								<select id="roomCategory" class="default-select wide form-control solid">
-									<option>Select room category</option>
-								</select>
-							</div>
-							<div class="mb-4">
-								<label class="form-label required">Select Room Number</label>
-								<select id="roomNumber" class="default-select wide form-control solid">
-									<option>Select room number</option>
-								</select>
-							</div>
+						<form id="reservationForm" data-pt-no-overlay="1"> 
 							<div class="mb-4">
 								<label class="form-label required">Bed Space</label>
-								<input type="text" id="bedSpace" class="form-control solid" placeholder="Enter Bed Space">
+								<select id="bedSpace" class="default-select wide form-control solid">
+									<option value="">Select bed space</option>
+								</select>
 								<input type="hidden" id="userId" value="${esc(userId)}">
 							</div>
 							<button type="submit" id="submit-button" class="btn btn-primary">Submit</button>
 						</form>
 					`;
-					fetchRoomCategories();
+					fetchAvailableBunks(hostelId, sessionId);
 					attachFormSubmitListener();
 				})
 				.catch(error => {
@@ -220,42 +205,21 @@ $pageHeader = 'Dashboard';
 				});
 	});
 
-	function fetchRoomCategories() {
-		fetch('php/fetch_room_categories.php')
+	function fetchAvailableBunks(hostelId, sessionId) {
+		fetch(`php/fetch_available_bunks.php?hostel_id=${hostelId}&session_id=${sessionId}`)
 			.then(response => response.json())
-			.then(categories => {
-				const roomCategorySelect = document.getElementById('roomCategory');
-				roomCategorySelect.innerHTML = '<option selected>Choose...</option>';
-				categories.forEach(category => {
+			.then(bunks => {
+				const bedSpaceSelect = document.getElementById('bedSpace');
+				bedSpaceSelect.innerHTML = '<option value="">Choose...</option>';
+				bunks.forEach(bunk => {
 					const option = document.createElement('option');
-					option.value = category.id;
-					option.textContent = category.room_type;
-					roomCategorySelect.appendChild(option);
-				});
-				roomCategorySelect.addEventListener('change', function () {
-					fetchRoomsByCategory(this.value);
+					option.value = bunk.id;
+					option.textContent = bunk.room_bunk;
+					bedSpaceSelect.appendChild(option);
 				});
 			})
 			.catch(error => {
-				console.error('Error fetching room categories:', error);
-			});
-	}
-
-	function fetchRoomsByCategory(categoryId) {
-		fetch(`php/fetch_rooms.php?category_id=${categoryId}`)
-			.then(response => response.json())
-			.then(rooms => {
-				const roomNumberSelect = document.getElementById('roomNumber');
-				roomNumberSelect.innerHTML = '<option selected>Choose...</option>';
-				rooms.forEach(room => {
-					const option = document.createElement('option');
-					option.value = room.id;
-					option.textContent = `${room.room_number} - (Available space: ${room.available_space})`;
-					roomNumberSelect.appendChild(option);
-				});
-			})
-			.catch(error => {
-				console.error('Error fetching rooms:', error);
+				console.error('Error fetching available bunks:', error);
 			});
 	}
 
@@ -266,30 +230,68 @@ $pageHeader = 'Dashboard';
 				e.preventDefault();
 
 				const userId = document.getElementById('userId').value;
-				const roomCategory = document.getElementById('roomCategory').value;
-				const roomNumber = document.getElementById('roomNumber').value;
 				const bedSpace = document.getElementById('bedSpace').value;
+				const submitBtn = document.getElementById('submit-button');
+
+				function showError(msg, title) {
+					if (window.PT && window.PT.error) {
+						window.PT.error(msg, title);
+					} else if (window.toastr) {
+						toastr.error(msg, title);
+					} else {
+						alert(title ? title + ": " + msg : msg);
+					}
+				}
+
+				function showSuccess(msg, title) {
+					if (window.PT && window.PT.success) {
+						window.PT.success(msg, title);
+					} else if (window.toastr) {
+						toastr.success(msg, title);
+					} else {
+						alert(title ? title + ": " + msg : msg);
+					}
+				}
+
+				if (!bedSpace) {
+					showError('Please select a bed space', 'Validation Error');
+					return;
+				}
+
+				const originalBtnText = submitBtn.innerHTML;
+				submitBtn.disabled = true;
 
 				fetch('assign_room.php', {
 					method: 'POST',
 					headers: {
 						'Content-Type': 'application/json'
 					},
-					body: JSON.stringify({ userId, roomCategory, roomNumber, bedSpace })
+					body: JSON.stringify({ userId, bedSpace })
 				})
 					.then(response => response.json())
 					.then(data => {
 						if (data.status === 'success') {
-							if (window.PT) window.PT.success(data.message || 'Room assignment successful!', 'Room Assigned');
-							setTimeout(function () {
-								if (window.PTNav && PTNav.refresh) { PTNav.refresh(); } else { location.reload(); }
-							}, 1200);
+							showSuccess(data.message || 'Room assignment successful!', 'Room Assigned');
+							
+							const modalInstance = bootstrap.Modal.getInstance(document.getElementById('viewModal'));
+							if (modalInstance) {
+								modalInstance.hide();
+							}
+							
+							// Revert button so it's ready if opened again
+							submitBtn.innerHTML = originalBtnText;
+							submitBtn.disabled = false;
 						} else {
-							if (window.PT) window.PT.error(data.message || 'Room assignment failed', 'Assignment Error');
+							submitBtn.innerHTML = originalBtnText;
+							submitBtn.disabled = false;
+							showError(data.message || 'Room assignment failed', 'Assignment Error');
 						}
 					})
 					.catch(error => {
 						console.error('Error assigning room:', error);
+						submitBtn.innerHTML = originalBtnText;
+						submitBtn.disabled = false;
+						showError('A network error occurred or server returned invalid JSON. Please try again.', 'Error');
 					});
 			});
 		} else {

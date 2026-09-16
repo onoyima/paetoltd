@@ -22,9 +22,9 @@
 
 <body>
     <div id="preloader">
-        <div class="pt-pre-brand">
-            <img class="pt-pre-logo" src="images/paetoa.png" alt="Pa-etos Logo" width="70" height="70">
-            <div class="pt-spinner"></div>
+        <div class="lds-ripple">
+            <div></div>
+            <div></div>
         </div>
     </div>
 
@@ -154,43 +154,40 @@
     <div class="modal fade" id="feeNoticeModal" tabindex="-1" role="dialog" aria-labelledby="feeNoticeModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered" role="document">
             <div class="modal-content">
-                <button type="button" class="auth-notice-close" data-bs-dismiss="modal" aria-label="Close">
-                    <i class="fa fa-times"></i>
-                </button>
-                <div class="auth-notice-head">
-                    <div class="auth-notice-icon">
-                        <i class="fa fa-bell"></i>
-                    </div>
-                    <h5 id="feeNoticeModalLabel">Accommodation Fee Notice</h5>
-                    <span class="auth-notice-badge">2026/2027 Session</span>
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title text-white" id="feeNoticeModalLabel">ETOS SIGNATURE HOSTEL – PAYMENT INSTRUCTIONS</h5>
+                    <button type="button" class="btn-close text-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
-                <div class="auth-notice-body">
-                    <p class="auth-notice-text">This is to formally inform all students that the accommodation fee for old <strong>PA-ETOS Hostel</strong> for the <strong>2026/2027 academic session</strong> is:</p>
-                    <div class="auth-notice-amount">
-                        <span class="auth-notice-amount-label">Accommodation Fee</span>
-                        <span class="auth-notice-amount-value">&#8358;400,000</span>
-                        <span class="auth-notice-amount-sub">Four Hundred Thousand Naira Only</span>
-                    </div>
-                    <div class="auth-notice-foot">
-                        <span class="auth-notice-sign">Signed</span>
-                        <span class="auth-notice-signer">Management</span>
-                    </div>
+                <div class="modal-body p-4 text-start">
+                    <p class="mb-2"><strong>Payment Details:</strong></p>
+                    <ul class="list-unstyled ms-3 mb-3">
+                        <li><strong>Account Name:</strong> PA-ETOS VERITAS 2</li>
+                        <li><strong>Account Number:</strong> 1312752788</li>
+                        <li><strong>Bank:</strong> Zenith Bank</li>
+                        <li><strong>Amount:</strong> &#8358;450,000.00</li>
+                    </ul>
+                    <p class="mb-3"><strong>Narration:</strong> Student’s Full Name Only.</p>
+                    <p class="mb-2">After making payment, please log in to the PA-ETOS Hostel Portal, select <strong>“Etos Signature”</strong>, and upload your payment details immediately after payment is made.</p>
+                    <p class="mb-0 text-danger"><strong>Please ensure that your payment details are uploaded promptly after payment.</strong></p>
                 </div>
-                <div class="auth-notice-actions">
-                    <button type="button" class="btn btn-primary auth-btn btn-block" data-bs-dismiss="modal">I Understand</button>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary btn-block" data-dismiss="modal" data-bs-dismiss="modal" id="closeNoticeBtn">I Understand</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Scripts -->
+    <!--**********************************
+        Scripts
+    ***********************************-->
+    <!-- Required vendors -->
     <script src="vendor/global/global.min.js"></script>
     <script src="vendor/bootstrap-select/dist/js/bootstrap-select.min.js"></script>
     <script src="js/custom.min.js"></script>
     <script src="js/dlabnav-init.js"></script>
     <script src="js/demo.js"></script>
     <script src="vendor/toastr/js/toastr.min.js"></script>
-
+    
     <script>
         function sendWhatsApp() {
             const message = "I'm a student of veritas university, please I need your help.";
@@ -215,8 +212,8 @@
         };
 
         // Trigger Notice Modal automatically on page load
-            var noticeModal = new bootstrap.Modal(document.getElementById('feeNoticeModal'));
-            noticeModal.show();
+        var noticeModal = new bootstrap.Modal(document.getElementById('feeNoticeModal'));
+        noticeModal.show();
 
         document.getElementById("loginForm").addEventListener("submit", function(event) {
             event.preventDefault(); // Prevent default form submission
@@ -255,8 +252,9 @@
         });
         
         // Room Check Modal functionality
-        if (document.getElementById('checkRoomBtn')) {
-            document.getElementById('checkRoomBtn').addEventListener('click', function() {
+        const checkRoomBtn = document.getElementById('checkRoomBtn');
+        if (checkRoomBtn) {
+            checkRoomBtn.addEventListener('click', function() {
                 var checkModal = new bootstrap.Modal(document.getElementById('roomCheckModal'));
                 checkModal.show();
             });
@@ -455,7 +453,7 @@
         }
         
         // Reset modal when it's closed
-        document.getElementById('roomCheckModal').addEventListener('hidden.bs.modal', function () {
+        $('#roomCheckModal').on('hidden.bs.modal', function () {
             resetModal();
         });
     </script>

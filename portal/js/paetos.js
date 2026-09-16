@@ -161,7 +161,7 @@
   document.addEventListener('submit', function (e) {
     var form = e.target;
     if (!form || form.hasAttribute('data-ajax')) return;
-    if (form.getAttribute('onsubmit') || form.getAttribute('data-pt-no-overlay')) return;
+    if (form.getAttribute('onsubmit') !== null || form.hasAttribute('data-pt-no-overlay')) return;
     showOverlay();
   }, true);
 

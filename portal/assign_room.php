@@ -20,41 +20,61 @@ $sessionId = (int)$activeSession['id'];
 $data = json_decode(file_get_contents("php://input"), true);
 
 // Validate input data
-if (isset($data['userId'], $data['roomCategory'], $data['roomNumber'], $data['bedSpace'])) {
+if (isset($data['userId'], $data['bedSpace'])) {
     $userId = (int)$data['userId'];
-    $roomCategory = (int)$data['roomCategory'];
-    $roomNumber = (int)$data['roomNumber'];
-    $bedSpace = trim($data['bedSpace']);
+    $assignRoomId = (int)$data['bedSpace']; // bedSpace is the ID from assign_room
 
-    if ($userId <= 0 || $roomCategory <= 0 || $roomNumber <= 0 || $bedSpace === '') {
-        echo json_encode(['status' => 'error', 'message' => 'All fields are required']);
+    if ($userId <= 0 || $assignRoomId <= 0) {
+        echo json_encode(['status' => 'error', 'message' => 'User and Bed Space are required']);
         exit;
     }
 
-    // Verify the selected room exists and belongs to the chosen category
-    $roomCheck = $conn->prepare("SELECT id, hostel_id FROM room WHERE id = ? AND category_id = ?");
-    $roomCheck->bind_param('ii', $roomNumber, $roomCategory);
-    $roomCheck->execute();
-    $roomCheck->store_result();
-
-    if ($roomCheck->num_rows == 0) {
-        $roomCheck->close();
-        echo json_encode(['status' => 'error', 'message' => 'Invalid room selection']);
+    // Fetch necessary info from userregistration
+    $userQ = $conn->prepare("SELECT firstName, middleName, lastName, regNo, department, parentPhone, level, contactNo FROM userregistration WHERE id = ?");
+    $userQ->bind_param('i', $userId);
+    $userQ->execute();
+    $res = $userQ->get_result();
+    
+    if ($res->num_rows == 0) {
+        $userQ->close();
+        echo json_encode(['status' => 'error', 'message' => 'User not found']);
         exit;
     }
-    $roomCheck->bind_result($roomId, $hostelId);
-    $roomCheck->fetch();
-    $roomCheck->close();
+    
+    $user = $res->fetch_assoc();
+    $userQ->close();
+    
+    $student_name = trim($user['firstName'] . ' ' . $user['middleName'] . ' ' . $user['lastName']);
+    $matric_no = $user['regNo'];
+    $department = $user['department'];
+    $parent_number = $user['parentPhone'];
+    $level = $user['level'];
+    $student_number = $user['contactNo'];
 
-    // Remove any existing reservation for this user in this session before assigning a new one
-    $del = $conn->prepare("DELETE FROM reservations WHERE user_id = ? AND session_id = ?");
-    $del->bind_param('ii', $userId, $sessionId);
-    $del->execute();
-    $del->close();
+    // Check if the assign_room row is still available
+    $checkQ = $conn->prepare("SELECT id FROM assign_room WHERE id = ? AND student_name IS NULL AND matric_no IS NULL");
+    $checkQ->bind_param('i', $assignRoomId);
+    $checkQ->execute();
+    $checkRes = $checkQ->get_result();
+    
+    if ($checkRes->num_rows == 0) {
+        $checkQ->close();
+        echo json_encode(['status' => 'error', 'message' => 'The selected bed space is no longer available']);
+        exit;
+    }
+    $checkQ->close();
 
-    // Store the room assignment
-    $stmt = $conn->prepare("INSERT INTO reservations (user_id, session_id, hostel_id, room_category, room_id, bed_space) VALUES (?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param('iiiiis', $userId, $sessionId, $hostelId, $roomCategory, $roomNumber, $bedSpace);
+    // Clear any previous assignment for this student in the current session
+    if (!empty($matric_no)) {
+        $unassign = $conn->prepare("UPDATE assign_room SET student_name = NULL, matric_no = NULL, department = NULL, parent_number = NULL, level = NULL, student_number = NULL, updated_at = NOW() WHERE matric_no = ? AND session_id = ?");
+        $unassign->bind_param('si', $matric_no, $sessionId);
+        $unassign->execute();
+        $unassign->close();
+    }
+
+    // Update the assign_room record
+    $stmt = $conn->prepare("UPDATE assign_room SET student_name = ?, matric_no = ?, department = ?, parent_number = ?, level = ?, student_number = ?, updated_at = NOW() WHERE id = ?");
+    $stmt->bind_param('ssssssi', $student_name, $matric_no, $department, $parent_number, $level, $student_number, $assignRoomId);
 
     if ($stmt->execute()) {
         // Mark the payment as assigned so the student dashboard reflects it
