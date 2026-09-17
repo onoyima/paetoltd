@@ -87,11 +87,15 @@ $pageHeader = 'Dashboard';
 										<td><?= htmlspecialchars($row["session_name"] ?? '—') ?></td>
 										<td><?= htmlspecialchars($row["hostel_name"] ?? '—') ?></td>
 										<td>
-											<button class="btn btn-success view-payment"
-												data-userid="<?= $row['id'] ?>"
-												data-paymentid="<?= (int)$row['payment_id'] ?>"
-												data-hostelid="<?= (int)$row['hostel_id'] ?>"
-												data-sessionid="<?= (int)$row['session_id'] ?>">Assign</button>
+											<?php if (isset($row['status']) && strcasecmp($row['status'], 'Assigned') === 0): ?>
+												<button class="btn btn-primary" disabled>Assigned</button>
+											<?php else: ?>
+												<button class="btn btn-success view-payment"
+													data-userid="<?= $row['id'] ?>"
+													data-paymentid="<?= (int)$row['payment_id'] ?>"
+													data-hostelid="<?= (int)$row['hostel_id'] ?>"
+													data-sessionid="<?= (int)$row['session_id'] ?>">Assign</button>
+											<?php endif; ?>
 										</td>
 										<td>
 											<button class="btn btn-danger">Reject</button>
@@ -131,6 +135,8 @@ $pageHeader = 'Dashboard';
 </div>
 
 <script>
+	var activeAssignBtn = null;
+
 	function esc(s) {
 		return String(s ?? '').replace(/[&<>"']/g, function (c) {
 			return { '&': '&', '<': '<', '>': '>', '"': '"', "'": '\'' }[c];
@@ -151,6 +157,7 @@ $pageHeader = 'Dashboard';
 	});
 
 	$(document).on('click', '.view-payment', function () {
+			activeAssignBtn = this;
 			const userId = this.getAttribute('data-userid');
 			const paymentId = this.getAttribute('data-paymentid') || '';
 			const hostelId = this.getAttribute('data-hostelid');
@@ -277,7 +284,14 @@ $pageHeader = 'Dashboard';
 							if (modalInstance) {
 								modalInstance.hide();
 							}
-							
+
+							if (activeAssignBtn) {
+								activeAssignBtn.className = 'btn btn-primary';
+								activeAssignBtn.textContent = 'Assigned';
+								activeAssignBtn.disabled = true;
+								activeAssignBtn = null;
+							}
+
 							// Revert button so it's ready if opened again
 							submitBtn.innerHTML = originalBtnText;
 							submitBtn.disabled = false;
