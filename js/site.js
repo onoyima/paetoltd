@@ -25,7 +25,7 @@
     }
 
     // ---------- Scroll reveal ----------
-    var revealEls = document.querySelectorAll('.reveal');
+    var revealEls = document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-zoom');
     if ('IntersectionObserver' in window && revealEls.length) {
         var io = new IntersectionObserver(function (entries) {
             entries.forEach(function (en) {

@@ -1,5 +1,18 @@
 /* ============ PA-ETOS shared site styles ============ */
 
+/* Prevent horizontal scroll/white gap caused by reveal animations on small screens */
+html,
+body {
+    overflow-x: hidden;
+}
+
+@supports (overflow-x: clip) {
+    html,
+    body {
+        overflow-x: clip;
+    }
+}
+
 /* ---------- Preloader ---------- */
 #preloader {
     position: fixed;

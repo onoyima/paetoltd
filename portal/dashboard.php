@@ -409,7 +409,7 @@ if (!$has_room && !empty($user_payments)) {
 												<div>
 													<a href="mailto:<?php echo htmlspecialchars($students_info['email'] ?? 'clintonfaze@outlook.com'); ?>"
 														class="icon-btn me-3"> <i class="fas fa-envelope"></i></a>
-													<a href="callto:+2348120212639;" class="icon-btn me-3"><i
+													<a href="callto:+2348033300519;" class="icon-btn me-3"><i
 															class="fas fa-phone-alt"></i></a>
 													<a href="#;" class="icon-btn"><i class="fas fa-info"></i></a>
 												</div>
@@ -423,7 +423,7 @@ if (!$has_room && !empty($user_payments)) {
 												<div>
 													<a href="mailto:<?php echo htmlspecialchars($students_info['email'] ?? 'clintonfaze@outlook.com'); ?>"
 														class="icon-btn me-3"> <i class="fas fa-envelope"></i></a>
-													<a href="callto:+2348120212639;" class="icon-btn me-3"><i
+													<a href="callto:+2348033300519;" class="icon-btn me-3"><i
 															class="fas fa-phone-alt"></i></a>
 													<a href="#;" class="icon-btn"><i class="fas fa-info"></i></a>
 												</div>
