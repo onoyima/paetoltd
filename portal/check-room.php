@@ -312,7 +312,7 @@ $room_status = $has_room ? "Room Allocated: " . $room_allocation['room_bunk'] : 
 															<div class="modal-body">
 																<div id="roomCheckForm">
 																	<h6 class="mb-3">Enter your details to check room allocation:</h6>
-																	<form id="studentSearchForm">
+																	<form id="studentSearchForm" data-pt-no-overlay>
 																		<div class="form-group mb-3">
 																			<label for="searchInput">Matric Number, Phone Number, or Parent's Number:</label>
 																			<input type="text" class="form-control" id="searchInput" placeholder="Enter your matric number, phone number, or parent's number" required>
